@@ -24,6 +24,15 @@
     <ClCompile Include="src\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\mesh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\triangle.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\array.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -32,12 +41,24 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
+    <Text Include="assets\cube.obj" />
+    <Text Include="assets\f22.obj" />
+    <Text Include="assets\duck.obj" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\triangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

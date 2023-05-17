@@ -163,8 +163,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\array.c" />
     <ClCompile Include="src\display.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\mesh.c" />
+    <ClCompile Include="src\triangle.c" />
     <ClCompile Include="src\vector.c" />
   </ItemGroup>
   <ItemGroup>
@@ -176,8 +179,24 @@
     <Text Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\array.h" />
     <ClInclude Include="src\display.h" />
+    <ClInclude Include="src\mesh.h" />
+    <ClInclude Include="src\triangle.h" />
     <ClInclude Include="src\vector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\cube.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="assets\f22.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\duck.obj">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
