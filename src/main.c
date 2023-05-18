@@ -10,14 +10,19 @@
 
 triangle_t* triangles_to_render = NULL;
 
-vec3_t camera_positon = { .x = 0, .y = 0, .z = 2 };
+vec3_t camera_positon = { .x = 0, .y = 0, .z = 0 };
 float fov_factor = 640.0;
+
+int rendering_mode = 0;
+
 
 bool is_running = false;
 uint32_t previous_frame_time = 0;
 
 void setup(void)
 {
+	rendering_mode = wireframe_mask | backface_culling_mask;
+
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
 	color_buffer_texture = SDL_CreateTexture(
@@ -28,7 +33,8 @@ void setup(void)
 		window_height
 	);
 
-	load_obj_file_data("./assets/cube.obj");
+	load_cube_mesh_data();
+	//load_obj_file_data("./assets/cube.obj");
 }
 
 void process_input(void)
@@ -44,6 +50,18 @@ void process_input(void)
 		case SDL_KEYDOWN:
 			if (event.key.keysym.sym == SDLK_ESCAPE)
 				is_running = false;
+			if (event.key.keysym.sym == SDLK_1)
+				rendering_mode = wireframe_mask | vertices_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_2)
+				rendering_mode = wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_3)
+				rendering_mode = filled_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_4)
+				rendering_mode = filled_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_c)
+				rendering_mode |= backface_culling_mask;
+			if (event.key.keysym.sym == SDLK_d)
+				rendering_mode &= ~backface_culling_mask;
 			break;
 		default:
 			break;
@@ -62,6 +80,9 @@ vec2_t project(vec3_t point)
 
 bool is_should_be_culled(vec3_t p1, vec3_t p2, vec3_t p3)
 {
+	if (!(rendering_mode & backface_culling_mask))
+		return false;
+
 	vec3_t a = vec3_sub(p2, p1);
 	vec3_t b = vec3_sub(p3, p1);
 	vec3_t normal = vec3_cross(a, b);
@@ -107,7 +128,6 @@ void update(void)
 
 			transformed_vertex.z += 5;
 
-
 			face_vertices[vIndex] = transformed_vertex;
 		}
 		
@@ -116,7 +136,7 @@ void update(void)
 			continue;
 		}
 
-		triangle_t projected_triangle = { .points = {0} };
+		triangle_t projected_triangle = { .points = {0}, .color = mesh_face.color, .avg_depth = 0.0f };
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
@@ -126,10 +146,33 @@ void update(void)
 			projected_point.y += (window_height / 2);
 
 			projected_triangle.points[vIndex] = projected_point;
+			projected_triangle.avg_depth += face_vertices[vIndex].z;
 		}
-		
+
 		array_push(triangles_to_render, projected_triangle);
 		
+	}
+
+	int num_triangles = array_length(triangles_to_render);
+	for (int i = 0; i < num_triangles - 1; i++)
+	{
+		for (int j = i + 1; j < num_triangles; j++)
+		{
+			if (triangles_to_render[i].avg_depth < triangles_to_render[j].avg_depth)
+			{
+				triangle_t temp = triangles_to_render[i];
+				triangles_to_render[i] = triangles_to_render[j];
+				triangles_to_render[j] = temp;
+			}
+		}
+	}
+}
+
+void draw_vertices(triangle_t triangle, uint32_t color)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		draw_rect(triangle.points[i].x - 2, triangle.points[i].y - 2, 4, 4, color);
 	}
 }
 
@@ -144,13 +187,30 @@ void render(void)
 	{
 		triangle_t triangle = triangles_to_render[i];
 
-		fill_triangle(triangle, 0xFFFFFFFF);
-		draw_triangle(
-			triangle.points[0].x, triangle.points[0].y,
-			triangle.points[1].x, triangle.points[1].y,
-			triangle.points[2].x, triangle.points[2].y,
-			0xFF000000
-		);
+		if (rendering_mode & filled_mask)
+		{
+			fill_triangle(triangle, triangle.color);
+		}
+
+		if (rendering_mode & vertices_mask)
+		{
+			draw_vertices(triangle, 0xFFFF0000);
+		}
+	}
+	if (rendering_mode & wireframe_mask)
+	{
+		for (int i = 0; i < num_triangles; i++)
+		{
+			triangle_t triangle = triangles_to_render[i];
+
+			draw_wireframe(
+				triangle.points[0].x, triangle.points[0].y,
+				triangle.points[1].x, triangle.points[1].y,
+				triangle.points[2].x, triangle.points[2].y,
+				0xFF00FFFF
+			);
+
+		}
 	}
 
 	array_free(triangles_to_render);

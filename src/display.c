@@ -3,6 +3,15 @@
 #include <math.h>
 #include "vector.h"
 
+////////////////////////////////////////////////////////////////////////
+// RENDERING MODES:
+//////////////////////////////////////////////////////////////////////// 
+const int wireframe_mask = 1;
+const int vertices_mask = 2;
+const int filled_mask = 4;
+const int backface_culling_mask = 8;
+//////////////////////////////////////////////////////////////////////// 
+
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
@@ -137,10 +146,23 @@ void destroy_window(void)
 
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color)
 {
-	//draw_line_dda(x0, y0, x1, y1, color);
-	draw_line_bresenham(x0, y0, x1, y1, color);
+	if (y0 == y1)
+	{
+		draw_line_horisontal(x0, x1, y0, color);
+	}
+	else
+	{
+		draw_line_bresenham(x0, y0, x1, y1, color);
+	}
 }
 
+void draw_line_horisontal(x0, x1, y, color)
+{
+	for (int xCurr = x0; xCurr <= x1; xCurr++)
+	{
+		draw_pixel(xCurr, y, color);
+	}
+}
 
 void draw_line_dda(int x0, int y0, int x1, int y1, uint32_t color)
 {
@@ -208,7 +230,7 @@ void draw_line_bresenham(int x0, int y0, int x1, int y1, uint32_t color)
 	}
 }
 
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void draw_wireframe(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
 {
 	draw_line(x0, y0, x1, y1, color);
 	draw_line(x1, y1, x2, y2, color);

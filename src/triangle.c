@@ -3,6 +3,8 @@
 #include <math.h>
 #include "display.h"
 
+int safe_pixel = 0;
+
 float get_slope_inversed(vec2_int_t p1, vec2_int_t p2)
 {
 	if (p2.y == p1.y) return 0;
@@ -11,7 +13,7 @@ float get_slope_inversed(vec2_int_t p1, vec2_int_t p2)
 
 void draw_triangle_top(vec2_int_t pTop, vec2_int_t p2, vec2_int_t p3, uint32_t color)
 {
-	if (pTop.y == p3.y || pTop.y == p2.y) return;
+	//if (pTop.y == p3.y || pTop.y == p2.y) return;
 
 	vec2_int_t leftBase = p2;
 	vec2_int_t rightBase = p3;
@@ -25,8 +27,8 @@ void draw_triangle_top(vec2_int_t pTop, vec2_int_t p2, vec2_int_t p3, uint32_t c
 	float leftStep = get_slope_inversed(pTop, leftBase);
 	float rightStep = get_slope_inversed(pTop, rightBase);
 
-	float xLeftCurr = pTop.x - 1;
-	float xRightCurr = pTop.x + 1;
+	float xLeftCurr = pTop.x - safe_pixel;
+	float xRightCurr = pTop.x + safe_pixel;
 
 	for (int yCurr = pTop.y; yCurr < leftBase.y; yCurr++)
 	{
@@ -38,7 +40,7 @@ void draw_triangle_top(vec2_int_t pTop, vec2_int_t p2, vec2_int_t p3, uint32_t c
 
 void draw_triangle_bottom(vec2_int_t pBot, vec2_int_t p2, vec2_int_t p3, uint32_t color)
 {
-	if (pBot.y == p3.y || pBot.y == p2.y) return;
+	//if (pBot.y == p3.y || pBot.y == p2.y) return;
 
 	vec2_int_t leftBase = p2;
 	vec2_int_t rightBase = p3;
@@ -52,8 +54,8 @@ void draw_triangle_bottom(vec2_int_t pBot, vec2_int_t p2, vec2_int_t p3, uint32_
 	float leftStep = get_slope_inversed(leftBase, pBot);
 	float rightStep = get_slope_inversed(rightBase, pBot);
 
-	float xLeftCurr = leftBase.x - 1;
-	float xRightCurr = rightBase.x + 1;
+	float xLeftCurr = leftBase.x - safe_pixel;
+	float xRightCurr = rightBase.x + safe_pixel;
 
 	for (int yCurr = leftBase.y; yCurr <= pBot.y; yCurr++)
 	{
@@ -107,4 +109,5 @@ void fill_triangle(triangle_t triangle, uint32_t color)
 
 	draw_triangle_top(pMin, pMid, pDiv, color);
 	draw_triangle_bottom(pMax, pMid, pDiv, color);
+
 }
