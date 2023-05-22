@@ -6,7 +6,7 @@ vec3_t vec3_rotate_x(vec3_t v, float angle)
 	vec3_t rotated_vector = {
 		.x = v.x,
 		.y = v.y * cos(angle) - v.z * sin(angle),
-		.z = v.z * cos(angle) + v.y * sin(angle)
+		.z = v.y * sin(angle) + v.z * cos(angle)
 	};
 
 	return rotated_vector;
@@ -15,9 +15,9 @@ vec3_t vec3_rotate_x(vec3_t v, float angle)
 vec3_t vec3_rotate_y(vec3_t v, float angle)
 {
 	vec3_t rotated_vector = {
-		.x = v.x * cos(angle) - v.z * sin(angle),
+		.x = v.x * cos(angle) + v.z * sin(angle),
 		.y = v.y,
-		.z = v.z * cos(angle) + v.x * sin(angle)
+		.z = -v.x * sin(angle) + v.z * cos(angle)
 	};
 
 	return rotated_vector;
@@ -27,7 +27,7 @@ vec3_t vec3_rotate_z(vec3_t v, float angle)
 {
 	vec3_t rotated_vector = {
 		.x = v.x * cos(angle) - v.y * sin(angle),
-		.y = v.y * cos(angle) + v.x * sin(angle),
+		.y = v.x * sin(angle) + v.y * cos(angle),
 		.z = v.z
 	};
 
@@ -157,5 +157,19 @@ void vec3_normalize(vec3_t* v)
 	v->x *= factor;
 	v->y *= factor;
 	v->z *= factor;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Vector conversion functions implementations
+///////////////////////////////////////////////////////////////////////////////////////
+vec4_t vec4_from_vec3(vec3_t v)
+{
+	return (vec4_t) {.x = v.x, .y = v.y, .z = v.z, .w = 1.0f};
+}
+
+vec3_t vec3_from_vec4(vec4_t v)
+{
+	return (vec3_t) { .x = v.x, .y = v.y, .z = v.z };
 }
 

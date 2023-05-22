@@ -33,6 +33,9 @@
     <ClCompile Include="src\array.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\matrix.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -59,6 +62,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

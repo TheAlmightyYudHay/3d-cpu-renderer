@@ -7,6 +7,7 @@
 #include "mesh.h"
 #include "triangle.h"
 #include "array.h"
+#include "matrix.h"
 
 triangle_t* triangles_to_render = NULL;
 
@@ -103,9 +104,29 @@ void update(void)
 
 	triangles_to_render = NULL;
 
-	mesh.rotation.x += 0.025f;
-	mesh.rotation.y += 0.025f;
-	mesh.rotation.z += 0.025f;
+	//mesh.rotation.x += 0.01f;
+	//mesh.rotation.y += 0.01f;
+	mesh.rotation.z += 0.01f;
+
+	mesh.scale.x += 0.002f;
+	//mesh.scale.y += 0.002f;
+
+	//mesh.translation.x += 0.01f;
+	//mesh.translation.y += 0.01f;
+	mesh.translation.z = 5;
+
+	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+	mat4_t rotate_x_matrix = mat4_make_rotation_x(mesh.rotation.x);
+	mat4_t rotate_y_matrix = mat4_make_rotation_y(mesh.rotation.y);
+	mat4_t rotate_z_matrix = mat4_make_rotation_z(mesh.rotation.z);
+	
+	mat4_t world_matrix = mat4_identity();
+	world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+	world_matrix = mat4_mul_mat4(rotate_z_matrix, world_matrix);
+	world_matrix = mat4_mul_mat4(rotate_y_matrix, world_matrix);
+	world_matrix = mat4_mul_mat4(rotate_x_matrix, world_matrix);
+	world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
 
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
@@ -120,15 +141,11 @@ void update(void)
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
-			vec3_t transformed_vertex = face_vertices[vIndex];
+			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
 
-			transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
-			transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-			transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
-			transformed_vertex.z += 5;
-
-			face_vertices[vIndex] = transformed_vertex;
+			face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
 		}
 		
 		if (is_should_be_culled(face_vertices[0], face_vertices[1], face_vertices[2]))

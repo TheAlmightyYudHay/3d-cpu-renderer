@@ -156,9 +156,11 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color)
 	}
 }
 
-void draw_line_horisontal(x0, x1, y, color)
+void draw_line_horisontal(int x0, int x1, int y, uint32_t color)
 {
-	for (int xCurr = x0; xCurr <= x1; xCurr++)
+	int xMin = x0 < x1 ? x0 : x1;
+	int xMax = x0 > x1 ? x0 : x1;
+	for (int xCurr = xMin; xCurr <= xMax; xCurr++)
 	{
 		draw_pixel(xCurr, y, color);
 	}
