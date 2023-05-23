@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL.h>
@@ -15,7 +16,7 @@ vec3_t camera_positon = { .x = 0, .y = 0, .z = 0 };
 float fov_factor = 640.0;
 
 int rendering_mode = 0;
-
+mat4_t projection_matrix = { 0 };
 
 bool is_running = false;
 uint32_t previous_frame_time = 0;
@@ -33,6 +34,13 @@ void setup(void)
 		window_width,
 		window_height
 	);
+
+	float fov = M_PI * 90.0 / 180.0;
+	float aspect = window_height / (float)window_width;
+	float zNear = 0.1;
+	float zFar = 100.0;
+
+	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
 
 	load_cube_mesh_data();
 	//load_obj_file_data("./assets/cube.obj");
@@ -69,16 +77,6 @@ void process_input(void)
 	}
 }
 
-vec2_t project(vec3_t point)
-{
-	float zDivizor = 1 / (point.z - camera_positon.z);
-	vec2_t projected_point = {
-		.x = fov_factor * point.x * zDivizor,
-		.y = fov_factor * point.y * zDivizor
-	};
-	return projected_point;
-}
-
 bool is_should_be_culled(vec3_t p1, vec3_t p2, vec3_t p3)
 {
 	if (!(rendering_mode & backface_culling_mask))
@@ -104,11 +102,11 @@ void update(void)
 
 	triangles_to_render = NULL;
 
-	//mesh.rotation.x += 0.01f;
-	//mesh.rotation.y += 0.01f;
-	mesh.rotation.z += 0.01f;
+	//mesh.rotation.x += 0.025f;
+	//mesh.rotation.y += 0.025f;
+	//mesh.rotation.z += 0.025f;
 
-	mesh.scale.x += 0.002f;
+	//mesh.scale.x += 0.002f;
 	//mesh.scale.y += 0.002f;
 
 	//mesh.translation.x += 0.01f;
@@ -157,13 +155,22 @@ void update(void)
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
-			vec2_t projected_point = project(face_vertices[vIndex]);
-			//Apply projection translate
-			projected_point.x += (window_width / 2);
-			projected_point.y += (window_height / 2);
+			printf("Before: %f %f %f\n", face_vertices[vIndex].x, face_vertices[vIndex].y, face_vertices[vIndex].z);
+			vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, vec4_from_vec3(face_vertices[vIndex]));
 
-			projected_triangle.points[vIndex] = projected_point;
-			projected_triangle.avg_depth += face_vertices[vIndex].z;
+			printf("After: %f %f %f\n\n\n", projected_point.x, projected_point.y, projected_point.z);
+			
+			//Scale into the view
+			projected_point.x *= (window_width / 8.0);
+			projected_point.y *= (window_height / 8.0);
+
+			//Apply projection translate
+			projected_point.x += (window_width / 2.0);
+			projected_point.y += (window_height / 2.0);
+
+
+			projected_triangle.points[vIndex] = (vec2_t){ .x = projected_point.x, .y = projected_point.y };
+			projected_triangle.avg_depth += projected_point.z;
 		}
 
 		array_push(triangles_to_render, projected_triangle);

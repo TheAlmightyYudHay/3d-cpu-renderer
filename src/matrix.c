@@ -110,3 +110,29 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v)
 		.w = 1.0f,
 	};
 }
+
+mat4_t mat4_make_perspective(float fov, float aspect, float zNear, float zFar)
+{
+	return (mat4_t) {
+		.m = {
+			{aspect/tan(fov/2.0),              0,                 0,                          0},
+			{                  0, 1/tan(fov/2.0),                 0,                          0},
+			{                  0,              0, zFar/(zFar-zNear), (-zFar*zNear)/(zFar-zNear)},
+			{                  0,			   0,                 1.0,                          0}
+		}
+	};
+}
+
+vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v)
+{
+	vec4_t projectedV = mat4_mul_vec4(mat_proj, v);
+
+	if (projectedV.w != 0.0)
+	{
+		projectedV.x /= projectedV.w;
+		projectedV.y /= projectedV.w;
+		projectedV.z /= projectedV.w;
+	}
+
+	return projectedV;
+}
