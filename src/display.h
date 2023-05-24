@@ -15,6 +15,8 @@
 // 2 - wireframe (mask 0001)
 // 3 - filled triangles (mask 0100)
 // 4 - filled triangles and wireframe (mask 0101)
+// 5 - textured (mask 10000)
+// 6 - textured and wireframe (mask 10001)
 //////////////////////////////////////////////////////////////////////// 
 // c - backface culling enabled (flag & 8 == 1)
 // d - backface culling disabled (~flag & 8 == 0)
@@ -24,6 +26,7 @@ extern const int wireframe_mask;
 extern const int vertices_mask;
 extern const int filled_mask;
 extern const int backface_culling_mask;
+extern const int textured_mask;
 
 ////////////////////////////////////////////////////////////////////////
 

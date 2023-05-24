@@ -159,13 +159,18 @@ void vec3_normalize(vec3_t* v)
 	v->z *= factor;
 }
 
+vec3_t vec3_negative(vec3_t v)
+{
+	return (vec3_t) {.x = -v.x, .y = -v.y, .z = -v.z};
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Vector conversion functions implementations
 ///////////////////////////////////////////////////////////////////////////////////////
 vec4_t vec4_from_vec3(vec3_t v)
 {
-	return (vec4_t) {.x = v.x, .y = v.y, .z = v.z, .w = 1.0f};
+	return (vec4_t) {.x = v.x, .y = v.y, .z = v.z, .w = 1.0};
 }
 
 vec3_t vec3_from_vec4(vec4_t v)

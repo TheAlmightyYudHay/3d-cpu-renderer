@@ -107,7 +107,7 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v)
 		.x = m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z + m.m[0][3] * v.w,
 		.y = m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z + m.m[1][3] * v.w,
 		.z = m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] * v.w,
-		.w = 1.0f,
+		.w = m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] * v.w,
 	};
 }
 
@@ -115,10 +115,10 @@ mat4_t mat4_make_perspective(float fov, float aspect, float zNear, float zFar)
 {
 	return (mat4_t) {
 		.m = {
-			{aspect/tan(fov/2.0),              0,                 0,                          0},
-			{                  0, 1/tan(fov/2.0),                 0,                          0},
-			{                  0,              0, zFar/(zFar-zNear), (-zFar*zNear)/(zFar-zNear)},
-			{                  0,			   0,                 1.0,                          0}
+			{aspect/tan(fov/2.0),               0,                 0,                          0},
+			{                  0, -1/tan(fov/2.0),                 0,                          0},
+			{                  0,               0, zFar/(zFar-zNear), (-zFar*zNear)/(zFar-zNear)},
+			{                  0,			    0,                 1.0,                          0}
 		}
 	};
 }

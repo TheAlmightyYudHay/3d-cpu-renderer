@@ -9,11 +9,12 @@
 #include "triangle.h"
 #include "array.h"
 #include "matrix.h"
+#include "light.h"
+#include "texture.h"
 
 triangle_t* triangles_to_render = NULL;
 
 vec3_t camera_positon = { .x = 0, .y = 0, .z = 0 };
-float fov_factor = 640.0;
 
 int rendering_mode = 0;
 mat4_t projection_matrix = { 0 };
@@ -35,15 +36,20 @@ void setup(void)
 		window_height
 	);
 
-	float fov = M_PI * 90.0 / 180.0;
+
+	vec3_normalize(&light.direction);
+	float fov = M_PI * 60.0 / 180.0;
 	float aspect = window_height / (float)window_width;
 	float zNear = 0.1;
 	float zFar = 100.0;
 
 	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
 
+	// Load hardcoded texture data
+	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+
 	load_cube_mesh_data();
-	//load_obj_file_data("./assets/cube.obj");
+	//load_obj_file_data("./assets/sphere.obj");
 }
 
 void process_input(void)
@@ -67,6 +73,10 @@ void process_input(void)
 				rendering_mode = filled_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
 			if (event.key.keysym.sym == SDLK_4)
 				rendering_mode = filled_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_5)
+				rendering_mode = textured_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			if (event.key.keysym.sym == SDLK_6)
+				rendering_mode = textured_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
 			if (event.key.keysym.sym == SDLK_c)
 				rendering_mode |= backface_culling_mask;
 			if (event.key.keysym.sym == SDLK_d)
@@ -77,15 +87,21 @@ void process_input(void)
 	}
 }
 
-bool is_should_be_culled(vec3_t p1, vec3_t p2, vec3_t p3)
+vec3_t calculate_face_normal(vec3_t p1, vec3_t p2, vec3_t p3)
+{
+	vec3_t a = vec3_sub(p2, p1);
+	vec3_t b = vec3_sub(p3, p1);
+	vec3_t normal = vec3_cross(a, b);
+	vec3_normalize(&normal);
+	return normal;
+}
+
+bool is_should_be_culled(vec3_t pointOn, vec3_t normal)
 {
 	if (!(rendering_mode & backface_culling_mask))
 		return false;
 
-	vec3_t a = vec3_sub(p2, p1);
-	vec3_t b = vec3_sub(p3, p1);
-	vec3_t normal = vec3_cross(a, b);
-	vec3_t camera_ray = vec3_sub(camera_positon, p1);
+	vec3_t camera_ray = vec3_sub(camera_positon, pointOn);
 	return vec3_dot(normal, camera_ray) <= 0.0;
 }
 
@@ -102,15 +118,16 @@ void update(void)
 
 	triangles_to_render = NULL;
 
-	//mesh.rotation.x += 0.025f;
-	//mesh.rotation.y += 0.025f;
-	//mesh.rotation.z += 0.025f;
+	mesh.rotation.x += 0.021f;
+	mesh.rotation.y += 0.021f;
+	mesh.rotation.z += 0.021f;
 
-	//mesh.scale.x += 0.002f;
-	//mesh.scale.y += 0.002f;
+	/*mesh.scale.x = 4;
+	mesh.scale.y = 4;
+	mesh.scale.z = 4;*/
 
 	//mesh.translation.x += 0.01f;
-	//mesh.translation.y += 0.01f;
+	//mesh.translation.y += 0.005f;
 	mesh.translation.z = 5;
 
 	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -145,24 +162,35 @@ void update(void)
 
 			face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
 		}
+
+		mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
 		
-		if (is_should_be_culled(face_vertices[0], face_vertices[1], face_vertices[2]))
+		if (is_should_be_culled(face_vertices[0], mesh_face.normal))
 		{
 			continue;
 		}
 
-		triangle_t projected_triangle = { .points = {0}, .color = mesh_face.color, .avg_depth = 0.0f };
+		float light_intencity_factor = vec3_dot(mesh_face.normal, vec3_negative(light.direction));
+		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intencity_factor);
+
+		triangle_t projected_triangle = {
+			.points = {0},
+			.texcoords = {
+				{ mesh_face.a_uv.u, mesh_face.a_uv.v},
+				{ mesh_face.b_uv.u, mesh_face.b_uv.v},
+				{ mesh_face.c_uv.u, mesh_face.c_uv.v},
+			},
+			.color = triangle_color, 
+			.avg_depth = 0.0f
+		};
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
-			printf("Before: %f %f %f\n", face_vertices[vIndex].x, face_vertices[vIndex].y, face_vertices[vIndex].z);
 			vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, vec4_from_vec3(face_vertices[vIndex]));
-
-			printf("After: %f %f %f\n\n\n", projected_point.x, projected_point.y, projected_point.z);
 			
 			//Scale into the view
-			projected_point.x *= (window_width / 8.0);
-			projected_point.y *= (window_height / 8.0);
+			projected_point.x *= (window_width / 4.0);
+			projected_point.y *= (window_height / 4.0);
 
 			//Apply projection translate
 			projected_point.x += (window_width / 2.0);
@@ -214,6 +242,11 @@ void render(void)
 		if (rendering_mode & filled_mask)
 		{
 			fill_triangle(triangle, triangle.color);
+		}
+
+		if (rendering_mode & textured_mask)
+		{
+			draw_textured_triangle(triangle, mesh_texture);
 		}
 
 		if (rendering_mode & vertices_mask)
