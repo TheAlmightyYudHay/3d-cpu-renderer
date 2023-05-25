@@ -18,7 +18,7 @@ typedef struct {
 } face_t;
 
 typedef struct {
-	vec2_t points[3];
+	vec4_t points[3];
 	tex2_t texcoords[3];
 	uint32_t color;
 	float avg_depth;

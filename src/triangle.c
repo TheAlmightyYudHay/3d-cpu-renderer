@@ -185,25 +185,98 @@ void draw_textured_triangle_bottom(
 	}
 }
 
+vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p)
+{
+	vec3_t weights = {0};
+	vec2_t ba = vec2_sub(b, a);
+	vec2_t ca = vec2_sub(c, a);
+	vec2_t bp = vec2_sub(b, p);
+	vec2_t cp = vec2_sub(c, p);
+	vec2_t ap = vec2_sub(a, p);
+
+	float area_abc = ca.x * ba.y - ca.y * ba.x;
+
+	if (area_abc == 0.0) return weights;
+	
+	weights.x = (cp.x * bp.y - cp.y * bp.x) / area_abc;
+	weights.y = (ap.x * cp.y - ap.y * cp.x) / area_abc;
+	weights.z = 1 - weights.x - weights.y;
+
+	return weights;
+}
+
+vec2_t uv_from_weights(
+	float u0, float v0, float w0,
+	float u1, float v1, float w1,
+	float u2, float v2, float w2,
+	vec3_t weights
+) {
+	vec2_t uv = { 0 };
+	float interpolated_reciprocal_w;
+
+
+	uv.x = u0/w0 * weights.x + u1/w1 * weights.y + u2/w2 * weights.z;
+	uv.y = v0/w0 * weights.x + v1/w1 * weights.y + v2/w2 * weights.z;
+	interpolated_reciprocal_w = 1.0/w0 * weights.x + 1.0/w1 * weights.y + 1.0/w2 * weights.z;
+
+	uv = interpolated_reciprocal_w != 0 ? vec2_div(uv, interpolated_reciprocal_w) : uv;
+
+	uv.x = uv.x < 0 ? 0 : (uv.x > 1 ? 1 : uv.x);
+	uv.y = uv.y < 0 ? 0 : (uv.y > 1 ? 1 : uv.y);
+
+	return uv;
+}
+
+uint32_t sample_color(
+	int x0, int y0, float z0, float w0, float u0, float v0,
+	int x1, int y1, float z1, float w1, float u1, float v1,
+	int x2, int y2, float z2, float w2, float u2, float v2,
+	int x, int y, uint32_t* texture
+) {
+	vec3_t uv_weights = barycentric_weights(
+		(vec2_t) {x0, y0},
+		(vec2_t) {x1, y1},
+		(vec2_t) {x2, y2},
+		(vec2_t) {x, y}
+	);
+
+	vec2_t uv = uv_from_weights(u0, v0, w0, u1, v1, w1, u2, v2, w2, uv_weights);
+
+	int col = uv.x * (texture_width - 1);
+	int row = (1 - uv.y) * (texture_height - 1);
+
+	return texture[row * texture_width + col];
+}
+
 void draw_textured_triangle(triangle_t triangle, uint32_t* texture)
 {
 	int x0 = (int)triangle.points[0].x;
 	int y0 = (int)triangle.points[0].y;
-	int u0 = triangle.texcoords[0].u;
-	int v0 = triangle.texcoords[0].v;
+	float z0 = triangle.points[0].z;
+	float w0 = triangle.points[0].w;
+	float u0 = triangle.texcoords[0].u;
+	float v0 = triangle.texcoords[0].v;
+	
 	int x1 = (int)triangle.points[1].x;
 	int y1 = (int)triangle.points[1].y;
-	int u1 = triangle.texcoords[1].u;
-	int v1 = triangle.texcoords[1].v;
+	float z1 = triangle.points[1].z;
+	float w1 = triangle.points[1].w;
+	float u1 = triangle.texcoords[1].u;
+	float v1 = triangle.texcoords[1].v;
+	
 	int x2 = (int)triangle.points[2].x;
 	int y2 = (int)triangle.points[2].y;
-	int u2 = triangle.texcoords[2].u;
-	int v2 = triangle.texcoords[2].v;
+	float z2 = triangle.points[2].z;
+	float w2 = triangle.points[2].w;
+	float u2 = triangle.texcoords[2].u;
+	float v2 = triangle.texcoords[2].v;
 
 	if (y0 > y1)
 	{
 		int_swap(&y0, &y1);
 		int_swap(&x0, &x1);
+		float_swap(&z0, &z1);
+		float_swap(&w0, &w1);
 		float_swap(&u0, &u1);
 		float_swap(&v0, &v1);
 	}
@@ -211,6 +284,8 @@ void draw_textured_triangle(triangle_t triangle, uint32_t* texture)
 	{
 		int_swap(&y1, &y2);
 		int_swap(&x1, &x2);
+		float_swap(&z1, &z2);
+		float_swap(&w1, &w2);
 		float_swap(&u1, &u2);
 		float_swap(&v1, &v2);
 	}
@@ -218,34 +293,11 @@ void draw_textured_triangle(triangle_t triangle, uint32_t* texture)
 	{
 		int_swap(&y0, &y1);
 		int_swap(&x0, &x1);
+		float_swap(&z0, &z1);
+		float_swap(&w0, &w1);
 		float_swap(&u0, &u1);
 		float_swap(&v0, &v1);
 	}
-
-	/*vec2_int_t pMin = { x0, y0 };
-	vec2_int_t pMid = { x1, y1 };
-	vec2_int_t pMax = { x2, y2 };
-
-	int mX = 0;
-	int mY = pMid.y;
-
-	float uDiv = 0;
-	float vDiv = 0;
-
-	if (pMax.x == pMin.x)
-	{
-		mX = pMax.x;
-	}
-	else
-	{
-		float slope = (pMax.y - pMin.y) / (float)(pMax.x - pMin.x);
-		mX = pMin.x + (pMid.y - pMin.y) / slope;
-	}
-
-	vec2_int_t pDiv = { .x = mX, .y = mY };
-
-	draw_textured_triangle_top(pMin, u0, v0, pMid, u1, v1, pDiv, uDiv, vDiv, texture);
-	draw_textured_triangle_bottom(pMax, u2, v2, pMid, u1, v1, pDiv, uDiv, vDiv, texture);*/
 
 
 	// Draw top triangle
@@ -262,8 +314,13 @@ void draw_textured_triangle(triangle_t triangle, uint32_t* texture)
 
 		for (int x = x_start; x <= x_end; x++)
 		{
-			////
-			draw_pixel(x, y, 0xFFFFFFFF);
+			uint32_t color = sample_color(
+				x0, y0, z0, w0, u0, v0,
+				x1, y1, z1, w1, u1, v1,
+				x2, y2, z2, w2, u2, v2,
+				x, y, texture
+			);
+			draw_pixel(x, y, color);
 		}
 	}
 	
@@ -280,8 +337,13 @@ void draw_textured_triangle(triangle_t triangle, uint32_t* texture)
 
 		for (int x = x_start; x <= x_end; x++)
 		{
-			////
-			draw_pixel(x, y, 0xFFFFFFFF);
+			uint32_t color = sample_color(
+				x0, y0, z0, w0, u0, v0,
+				x1, y1, z1, w1, u1, v1,
+				x2, y2, z2, w2, u2, v2,
+				x, y, texture
+			);
+			draw_pixel(x, y, color);
 		}
 	}
 }

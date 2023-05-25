@@ -24,7 +24,7 @@ uint32_t previous_frame_time = 0;
 
 void setup(void)
 {
-	rendering_mode = wireframe_mask | backface_culling_mask;
+	rendering_mode = textured_mask | wireframe_mask | backface_culling_mask;
 
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
@@ -118,15 +118,15 @@ void update(void)
 
 	triangles_to_render = NULL;
 
-	mesh.rotation.x += 0.021f;
+	//mesh.rotation.x += 0.021f;
 	mesh.rotation.y += 0.021f;
-	mesh.rotation.z += 0.021f;
+	//mesh.rotation.z += 0.021f;
 
 	/*mesh.scale.x = 4;
 	mesh.scale.y = 4;
 	mesh.scale.z = 4;*/
 
-	//mesh.translation.x += 0.01f;
+	//mesh.translation.x = 5;
 	//mesh.translation.y += 0.005f;
 	mesh.translation.z = 5;
 
@@ -197,7 +197,7 @@ void update(void)
 			projected_point.y += (window_height / 2.0);
 
 
-			projected_triangle.points[vIndex] = (vec2_t){ .x = projected_point.x, .y = projected_point.y };
+			projected_triangle.points[vIndex] = projected_point;
 			projected_triangle.avg_depth += projected_point.z;
 		}
 
