@@ -18,6 +18,7 @@ SDL_Renderer* renderer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
 
 uint32_t* color_buffer = NULL;
+float* z_buffer = NULL;
 int window_width = 800;
 int window_height = 600;
 extern const int pixelGridSize = 100;
@@ -74,6 +75,17 @@ void render_color_buffer(void)
 	);
 
 	SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
+}
+
+void clear_z_buffer(void)
+{
+	for (int row = 0; row < window_height; row++)
+	{
+		for (int col = 0; col < window_width; col++)
+		{
+			z_buffer[window_width * row + col] = 1.0;
+		}
+	}
 }
 
 void clear_color_buffer(uint32_t color)

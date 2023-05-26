@@ -11,6 +11,7 @@
 #include "matrix.h"
 #include "light.h"
 #include "texture.h"
+#include "upng.h"
 
 triangle_t* triangles_to_render = NULL;
 
@@ -27,10 +28,11 @@ void setup(void)
 	rendering_mode = textured_mask | wireframe_mask | backface_culling_mask;
 
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
+	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
 
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_STREAMING,
 		window_width,
 		window_height
@@ -46,10 +48,10 @@ void setup(void)
 	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
 
 	// Load hardcoded texture data
-	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+	load_png_texture_data("./assets/f22.png");
 
-	load_cube_mesh_data();
-	//load_obj_file_data("./assets/sphere.obj");
+	//load_cube_mesh_data();
+	load_obj_file_data("./assets/f22.obj");
 }
 
 void process_input(void)
@@ -118,9 +120,9 @@ void update(void)
 
 	triangles_to_render = NULL;
 
-	//mesh.rotation.x += 0.021f;
-	mesh.rotation.y += 0.021f;
-	//mesh.rotation.z += 0.021f;
+	mesh.rotation.x += 0.011f;
+	mesh.rotation.y += 0.011f;
+	mesh.rotation.z += 0.011f;
 
 	/*mesh.scale.x = 4;
 	mesh.scale.y = 4;
@@ -180,8 +182,7 @@ void update(void)
 				{ mesh_face.b_uv.u, mesh_face.b_uv.v},
 				{ mesh_face.c_uv.u, mesh_face.c_uv.v},
 			},
-			.color = triangle_color, 
-			.avg_depth = 0.0f
+			.color = triangle_color
 		};
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
@@ -198,25 +199,10 @@ void update(void)
 
 
 			projected_triangle.points[vIndex] = projected_point;
-			projected_triangle.avg_depth += projected_point.z;
 		}
 
 		array_push(triangles_to_render, projected_triangle);
 		
-	}
-
-	int num_triangles = array_length(triangles_to_render);
-	for (int i = 0; i < num_triangles - 1; i++)
-	{
-		for (int j = i + 1; j < num_triangles; j++)
-		{
-			if (triangles_to_render[i].avg_depth < triangles_to_render[j].avg_depth)
-			{
-				triangle_t temp = triangles_to_render[i];
-				triangles_to_render[i] = triangles_to_render[j];
-				triangles_to_render[j] = temp;
-			}
-		}
 	}
 }
 
@@ -230,7 +216,6 @@ void draw_vertices(triangle_t triangle, uint32_t color)
 
 void render(void)
 {
-	clear_color_buffer(0xFF000000);
 	draw_grid(0xFF333333);
 	
 	int num_triangles = array_length(triangles_to_render);
@@ -273,6 +258,9 @@ void render(void)
 	array_free(triangles_to_render);
 
 	render_color_buffer();
+	
+	clear_z_buffer();
+	clear_color_buffer(0xFF000000);
 
 	SDL_RenderPresent(renderer);
 }
@@ -280,6 +268,8 @@ void render(void)
 void free_resources(void)
 {
 	free(color_buffer);
+	free(z_buffer);
+	upng_free(png_texture);
 	array_free(mesh.faces);
 	array_free(mesh.vertices);
 }

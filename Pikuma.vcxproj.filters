@@ -45,6 +45,9 @@
     <ClCompile Include="src\swap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\upng.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -57,6 +60,10 @@
     <Text Include="assets\f22.obj" />
     <Text Include="assets\duck.obj" />
     <Text Include="assets\sphere.obj" />
+    <Text Include="assets\f117.obj" />
+    <Text Include="assets\efa.obj" />
+    <Text Include="assets\drone.obj" />
+    <Text Include="assets\crab.obj" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\display.h">
@@ -86,5 +93,31 @@
     <ClInclude Include="src\swap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\upng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\cube.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\pikuma.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\crab.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\drone.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\efa.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\f22.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="assets\f117.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

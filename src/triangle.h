@@ -21,9 +21,8 @@ typedef struct {
 	vec4_t points[3];
 	tex2_t texcoords[3];
 	uint32_t color;
-	float avg_depth;
 } triangle_t;
 
+vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);
 void fill_triangle(triangle_t triangle, uint32_t color);
-
 void draw_textured_triangle(triangle_t triangle, uint32_t* texture);

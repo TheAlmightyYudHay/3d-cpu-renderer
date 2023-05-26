@@ -132,7 +132,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\includes\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -172,6 +172,7 @@
     <ClCompile Include="src\swap.c" />
     <ClCompile Include="src\texture.c" />
     <ClCompile Include="src\triangle.c" />
+    <ClCompile Include="src\upng.c" />
     <ClCompile Include="src\vector.c" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +192,7 @@
     <ClInclude Include="src\swap.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\triangle.h" />
+    <ClInclude Include="src\upng.h" />
     <ClInclude Include="src\vector.h" />
   </ItemGroup>
   <ItemGroup>
@@ -208,6 +210,29 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="assets\sphere.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\crab.png" />
+    <Image Include="assets\cube.png" />
+    <Image Include="assets\drone.png" />
+    <Image Include="assets\efa.png" />
+    <Image Include="assets\f117.png" />
+    <Image Include="assets\f22.png" />
+    <Image Include="assets\pikuma.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="assets\crab.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="assets\drone.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="assets\efa.obj">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="assets\f117.obj">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

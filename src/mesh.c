@@ -70,17 +70,32 @@ vec3_t read_mesh_vertex(char* line)
 	return v;
 }
 
-face_t read_mesh_face(char* line)
+face_t read_mesh_face(char* line, tex2_t* uv_buffer)
 {
 	face_t f;
-	sscanf_s(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%*d", &f.a, &f.b, &f.c);
 
+	int uv_a_index, uv_b_index, uv_c_index;
+
+	sscanf_s(line, "f %d/%d/%*d %d/%d/%*d %d/%d/%*d", &f.a, &uv_a_index, &f.b, &uv_b_index, &f.c, &uv_c_index);
+
+	f.a_uv = uv_buffer[uv_a_index - 1];
+	f.b_uv = uv_buffer[uv_b_index - 1];
+	f.c_uv = uv_buffer[uv_c_index - 1];
+	
 	f.a -= 1;
 	f.b -= 1;
 	f.c -= 1;
+
 	f.color = 0xFFFFFFFF;
 
 	return f;
+}
+
+tex2_t read_mesh_uv(char* line)
+{
+	tex2_t uv;
+	sscanf_s(line, "vt %f %f", &uv.u, &uv.v);
+	return uv;
 }
 
 void load_obj_file_data(char* filename)
@@ -95,6 +110,8 @@ void load_obj_file_data(char* filename)
 		printf("Error: Could not open file %s\n", filename);
 		return;
 	}
+
+	tex2_t* uv_buffer = NULL;
 	
 	while (fgets(line, sizeof(line), fp) != NULL)
 	{
@@ -105,11 +122,18 @@ void load_obj_file_data(char* filename)
 			array_push(mesh.vertices, read_mesh_vertex(line));
 		}
 
+		if (strncmp(line, "vt ", 3) == 0)
+		{
+			array_push(uv_buffer, read_mesh_uv(line));
+		}
+
 		if (strncmp(line, "f ", 2) == 0)
 		{
-			array_push(mesh.faces, read_mesh_face(line));
+			array_push(mesh.faces, read_mesh_face(line, uv_buffer));
 		}
 	}
+
+	array_free(uv_buffer);
 
 	fclose(fp);
 }
