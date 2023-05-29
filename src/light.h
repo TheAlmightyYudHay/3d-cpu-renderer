@@ -5,6 +5,7 @@
 
 typedef struct {
 	vec3_t direction;
+	vec3_t view;
 } light_t;
 
 extern light_t light;

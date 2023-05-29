@@ -12,22 +12,22 @@
 #include "light.h"
 #include "texture.h"
 #include "upng.h"
+#include "camera.h"
 
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render = 0;
-
-vec3_t camera_positon = { .x = 0, .y = 0, .z = 0 };
 
 int rendering_mode = 0;
 mat4_t projection_matrix = { 0 };
 
 bool is_running = false;
 uint32_t previous_frame_time = 0;
+float delta_time;
 
 void setup(void)
 {
-	rendering_mode = textured_mask | wireframe_mask | backface_culling_mask;
+	rendering_mode = textured_mask | backface_culling_mask;
 
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
@@ -51,10 +51,10 @@ void setup(void)
 	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
 
 	// Load hardcoded texture data
-	load_png_texture_data("./assets/crab.png");
+	load_png_texture_data("./assets/f22.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/crab.obj");
+	load_obj_file_data("./assets/f22.obj");
 }
 
 void process_input(void)
@@ -83,11 +83,27 @@ void process_input(void)
 			if (event.key.keysym.sym == SDLK_6)
 				rendering_mode = textured_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
 			if (event.key.keysym.sym == SDLK_c)
-				rendering_mode |= backface_culling_mask;
-			if (event.key.keysym.sym == SDLK_d)
-				rendering_mode &= ~backface_culling_mask;
+				rendering_mode ^= backface_culling_mask;
 			if (event.key.keysym.sym == SDLK_f)
 				rendering_mode ^= lighting_mask;
+			if (event.key.keysym.sym == SDLK_UP)
+				camera.position.y += 3.0 * delta_time;
+			if (event.key.keysym.sym == SDLK_DOWN)
+				camera.position.y -= 3.0 * delta_time;
+			if (event.key.keysym.sym == SDLK_a)
+				camera.yaw_angle -= 1.0 * delta_time;
+			if (event.key.keysym.sym == SDLK_d)
+				camera.yaw_angle += 1.0 * delta_time;
+			if (event.key.keysym.sym == SDLK_w)
+			{
+				camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+				camera.position = vec3_add(camera.position, camera.forward_velocity);
+			}
+			if (event.key.keysym.sym == SDLK_s)
+			{
+				camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+				camera.position = vec3_sub(camera.position, camera.forward_velocity);
+			}
 			break;
 		default:
 			break;
@@ -108,7 +124,8 @@ bool is_should_be_culled(vec3_t pointOn, vec3_t normal)
 	if (!(rendering_mode & backface_culling_mask))
 		return false;
 
-	vec3_t camera_ray = vec3_sub(camera_positon, pointOn);
+	vec3_t origin = { 0, 0, 0 };
+	vec3_t camera_ray = vec3_sub(origin, pointOn);
 	return vec3_dot(normal, camera_ray) <= 0.0;
 }
 
@@ -121,20 +138,22 @@ void update(void)
 		SDL_Delay(time_to_wait);
 	}
 
+	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
+
 	previous_frame_time = SDL_GetTicks();
 
 	num_triangles_to_render = 0;
 
-	mesh.rotation.x += 0.011f;
-	mesh.rotation.y += 0.011f;
-	//mesh.rotation.z += 0.011f;
+	//mesh.rotation.x += 1.0f * delta_time;
+	//mesh.rotation.y += 3.141592f * delta_time;
+	//mesh.rotation.z += 1.0f * delta_time;
 
 	/*mesh.scale.x = 4;
 	mesh.scale.y = 4;
 	mesh.scale.z = 4;*/
 
 	//mesh.translation.x = 5;
-	//mesh.translation.y += 0.005f;
+	//mesh.translation.y += 0.005f * delta_time;
 	mesh.translation.z = 5;
 
 	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -154,6 +173,20 @@ void update(void)
 	normal_matrix = mat4_mul_mat4(rotate_z_matrix, normal_matrix);
 	normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
 	normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
+
+	//camera.position.x += 1 * delta_time;
+	//camera.position.y += 1 * delta_time;
+	vec3_t up_direction = { 0, 1, 0 };
+	
+	vec3_t target = { 0, 0, 1 };
+	mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw_angle);
+	camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+
+	target = vec3_add(camera.position, camera.direction);
+
+	mat4_t view_matrix = mat4_look_at(camera.position, target, up_direction);
+	//world_matrix = mat4_mul_mat4(view_matrix, world_matrix);
+	//normal_matrix = mat4_mul_mat4(view_matrix, normal_matrix);
 
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
@@ -175,11 +208,21 @@ void update(void)
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
 			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
+			vec4_t transformed_normal = {
+				.x = face_normals[vIndex].x,
+				.y = face_normals[vIndex].y,
+				.z = face_normals[vIndex].z,
+				.w = 0
+			};
 
 			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
-			face_normals[vIndex] = vec3_from_vec4(mat4_mul_vec4(normal_matrix, vec4_from_vec3(face_normals[vIndex])));
+			transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+			
+			transformed_normal = mat4_mul_vec4(normal_matrix, transformed_normal);
+			transformed_normal = mat4_mul_vec4(view_matrix, transformed_normal);
 
 			face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
+			face_normals[vIndex] = vec3_from_vec4(transformed_normal);
 		}
 
 		mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
@@ -189,7 +232,14 @@ void update(void)
 			continue;
 		}
 
-		float light_intencity_factor = vec3_dot(mesh_face.normal, vec3_negative(light.direction));
+		light.view = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t){
+			.x = light.direction.x,
+			.y = light.direction.y,
+			.z = light.direction.z,
+			.w = 0
+		}));
+
+		float light_intencity_factor = vec3_dot(mesh_face.normal, vec3_negative(light.view));
 		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intencity_factor);
 
 		triangle_t projected_triangle = {

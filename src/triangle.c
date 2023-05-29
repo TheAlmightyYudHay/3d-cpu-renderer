@@ -36,6 +36,7 @@ void draw_triangle_pixel(
 
 	float interpolated_reciprocal_w = 1.0 / w0 * weights.x + 1.0 / w1 * weights.y + 1.0 / w2 * weights.z;
 
+	if (x >= window_width || y >= window_height || x < 0 || y < 0) return;
 	if (z_buffer[(window_width * y) + x] < (1.0 - interpolated_reciprocal_w)) return;
 
 	z_buffer[(window_width * y) + x] = 1.0 - interpolated_reciprocal_w;
@@ -167,6 +168,7 @@ void draw_texel(
 
 	float interpolated_reciprocal_w = 1.0 / w0 * weights.x + 1.0 / w1 * weights.y + 1.0 / w2 * weights.z;
 	
+	if (x >= window_width || y >= window_height || x < 0 || y < 0) return;
 	if (z_buffer[(window_width * y) + x] < (1.0 - interpolated_reciprocal_w)) return;
 	
 	z_buffer[(window_width * y) + x] = 1.0 - interpolated_reciprocal_w;
@@ -193,7 +195,7 @@ void draw_texel(
 	if (is_lit)
 	{
 		vec3_normalize(&fragment_normal);
-		float light_intencity_factor = vec3_dot(fragment_normal, vec3_negative(light.direction));
+		float light_intencity_factor = vec3_dot(fragment_normal, vec3_negative(light.view));
 		result_color = light_apply_intensity(result_color, light_intencity_factor);
 	}
 

@@ -1,7 +1,8 @@
 #include "light.h"
 
 extern light_t light = {
-	.direction = {.x = 0, .y = 1, .z = 1 } 
+	.direction = {.x = 0, .y = 0, .z = 1 },
+	.view = {.x = 0, .y = -1, .z = 0 }
 };
 
 uint32_t light_apply_intensity(uint32_t original_color, float percentage_factor)
