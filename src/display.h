@@ -20,6 +20,7 @@
 //////////////////////////////////////////////////////////////////////// 
 // c - backface culling enabled (flag & 8 == 1)
 // d - backface culling disabled (~flag & 8 == 0)
+// l - lighting enabled (flag & 32 == 1)
 ////////////////////////////////////////////////////////////////////////
 
 extern const int wireframe_mask;
@@ -27,6 +28,7 @@ extern const int vertices_mask;
 extern const int filled_mask;
 extern const int backface_culling_mask;
 extern const int textured_mask;
+extern const int lighting_mask;
 
 ////////////////////////////////////////////////////////////////////////
 

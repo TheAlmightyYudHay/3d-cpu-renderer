@@ -11,6 +11,7 @@ const int vertices_mask = 2;
 const int filled_mask = 4;
 const int backface_culling_mask = 8;
 extern const int textured_mask = 16;
+const int lighting_mask = 32;
 //////////////////////////////////////////////////////////////////////// 
 
 SDL_Window* window = NULL;

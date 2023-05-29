@@ -13,7 +13,9 @@
 #include "texture.h"
 #include "upng.h"
 
-triangle_t* triangles_to_render = NULL;
+#define MAX_TRIANGLES_PER_MESH 10000
+triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
+int num_triangles_to_render = 0;
 
 vec3_t camera_positon = { .x = 0, .y = 0, .z = 0 };
 
@@ -40,6 +42,7 @@ void setup(void)
 
 
 	vec3_normalize(&light.direction);
+
 	float fov = M_PI * 60.0 / 180.0;
 	float aspect = window_height / (float)window_width;
 	float zNear = 0.1;
@@ -48,10 +51,10 @@ void setup(void)
 	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
 
 	// Load hardcoded texture data
-	load_png_texture_data("./assets/f22.png");
+	load_png_texture_data("./assets/crab.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
+	load_obj_file_data("./assets/crab.obj");
 }
 
 void process_input(void)
@@ -83,6 +86,8 @@ void process_input(void)
 				rendering_mode |= backface_culling_mask;
 			if (event.key.keysym.sym == SDLK_d)
 				rendering_mode &= ~backface_culling_mask;
+			if (event.key.keysym.sym == SDLK_f)
+				rendering_mode ^= lighting_mask;
 			break;
 		default:
 			break;
@@ -118,11 +123,11 @@ void update(void)
 
 	previous_frame_time = SDL_GetTicks();
 
-	triangles_to_render = NULL;
+	num_triangles_to_render = 0;
 
 	mesh.rotation.x += 0.011f;
 	mesh.rotation.y += 0.011f;
-	mesh.rotation.z += 0.011f;
+	//mesh.rotation.z += 0.011f;
 
 	/*mesh.scale.x = 4;
 	mesh.scale.y = 4;
@@ -145,6 +150,11 @@ void update(void)
 	world_matrix = mat4_mul_mat4(rotate_x_matrix, world_matrix);
 	world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
 
+	mat4_t normal_matrix = mat4_identity();
+	normal_matrix = mat4_mul_mat4(rotate_z_matrix, normal_matrix);
+	normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
+	normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
+
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
 	{
@@ -155,12 +165,19 @@ void update(void)
 			mesh.vertices[mesh_face.c],
 		};
 
+		vec3_t face_normals[3] = {
+			mesh_face.a_normal,
+			mesh_face.b_normal,
+			mesh_face.c_normal
+		};
+
 
 		for (int vIndex = 0; vIndex < 3; vIndex++)
 		{
 			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
 
 			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+			face_normals[vIndex] = vec3_from_vec4(mat4_mul_vec4(normal_matrix, vec4_from_vec3(face_normals[vIndex])));
 
 			face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
 		}
@@ -178,9 +195,14 @@ void update(void)
 		triangle_t projected_triangle = {
 			.points = {0},
 			.texcoords = {
-				{ mesh_face.a_uv.u, mesh_face.a_uv.v},
-				{ mesh_face.b_uv.u, mesh_face.b_uv.v},
-				{ mesh_face.c_uv.u, mesh_face.c_uv.v},
+				mesh_face.a_uv,
+				mesh_face.b_uv,
+				mesh_face.c_uv,
+			},
+			.normals = {
+				face_normals[0],
+				face_normals[1],
+				face_normals[2],
 			},
 			.color = triangle_color
 		};
@@ -201,7 +223,11 @@ void update(void)
 			projected_triangle.points[vIndex] = projected_point;
 		}
 
-		array_push(triangles_to_render, projected_triangle);
+		if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
+		{
+			triangles_to_render[num_triangles_to_render] = projected_triangle;
+			num_triangles_to_render += 1;
+		}
 		
 	}
 }
@@ -217,10 +243,8 @@ void draw_vertices(triangle_t triangle, uint32_t color)
 void render(void)
 {
 	draw_grid(0xFF333333);
-	
-	int num_triangles = array_length(triangles_to_render);
 
-	for (int i = 0; i < num_triangles; i++)
+	for (int i = 0; i < num_triangles_to_render; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
 
@@ -231,7 +255,7 @@ void render(void)
 
 		if (rendering_mode & textured_mask)
 		{
-			draw_textured_triangle(triangle, mesh_texture);
+			draw_textured_triangle(triangle, mesh_texture, rendering_mode & lighting_mask);
 		}
 
 		if (rendering_mode & vertices_mask)
@@ -241,7 +265,7 @@ void render(void)
 	}
 	if (rendering_mode & wireframe_mask)
 	{
-		for (int i = 0; i < num_triangles; i++)
+		for (int i = 0; i < num_triangles_to_render; i++)
 		{
 			triangle_t triangle = triangles_to_render[i];
 
@@ -254,8 +278,6 @@ void render(void)
 
 		}
 	}
-
-	array_free(triangles_to_render);
 
 	render_color_buffer();
 	

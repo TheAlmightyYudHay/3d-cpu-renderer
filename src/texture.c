@@ -20,8 +20,6 @@ void load_png_texture_data(char* filepath)
             mesh_texture = (uint32_t*)upng_get_buffer(png_texture);
             texture_width = upng_get_width(png_texture);
             texture_height = upng_get_height(png_texture);
-
-            printf("w %d h %d", texture_width, texture_height);
         }
     }
 }
