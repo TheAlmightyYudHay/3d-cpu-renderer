@@ -13,6 +13,7 @@
 #include "texture.h"
 #include "upng.h"
 #include "camera.h"
+#include "clipping.h"
 
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
@@ -27,7 +28,7 @@ float delta_time;
 
 void setup(void)
 {
-	rendering_mode = textured_mask | backface_culling_mask;
+	rendering_mode = wireframe_mask | backface_culling_mask;
 
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
@@ -43,18 +44,22 @@ void setup(void)
 
 	vec3_normalize(&light.direction);
 
-	float fov = M_PI * 60.0 / 180.0;
-	float aspect = window_height / (float)window_width;
+	float aspecty = window_height / (float)window_width;
+	float aspectx = window_width / (float)window_height;
+	float fovy = M_PI * 60.0 / 180.0;
+	float fovx = 2 * atan(aspectx * tan(fovy / 2.0));
 	float zNear = 0.1;
 	float zFar = 100.0;
 
-	projection_matrix = mat4_make_perspective(fov, aspect, zNear, zFar);
+	init_frustum_planes(fovy, fovx, zNear, zFar);
+
+	projection_matrix = mat4_make_perspective(fovy, aspecty, zNear, zFar);
 
 	// Load hardcoded texture data
-	load_png_texture_data("./assets/f22.png");
+	load_png_texture_data("./assets/crab.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
+	load_obj_file_data("./assets/crab.obj");
 }
 
 void process_input(void)
@@ -129,6 +134,53 @@ bool is_should_be_culled(vec3_t pointOn, vec3_t normal)
 	return vec3_dot(normal, camera_ray) <= 0.0;
 }
 
+triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index2)
+{
+
+	triangle_t triangle = {
+			.points = {
+				vec4_from_vec3(polygon->vertices[index0]),
+				vec4_from_vec3(polygon->vertices[index1]),
+				vec4_from_vec3(polygon->vertices[index2])
+			},
+			.texcoords = {
+				polygon->texcoords[index0],
+				polygon->texcoords[index1],
+				polygon->texcoords[index2]
+			},
+			.normals = {
+				polygon->normals[index0],
+				polygon->normals[index1],
+				polygon->normals[index2]
+			},
+			.color = 0xFFFFFFFF
+	};
+
+	if (rendering_mode & lighting_mask)
+	{
+		vec3_t face_normal = calculate_face_normal(polygon->vertices[index0], polygon->vertices[index1], polygon->vertices[index2]);
+		float light_intencity_factor = vec3_dot(face_normal, vec3_negative(light.view));
+		triangle.color = light_apply_intensity(triangle.color, light_intencity_factor);
+	}
+
+	return triangle;
+}
+
+void project_triangle(triangle_t* triangle)
+{
+	for (int vIndex = 0; vIndex < 3; vIndex++)
+	{
+		vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, triangle->points[vIndex]);
+
+		////Scale into the view
+		projected_point.x = (projected_point.x / 2.0 + 0.5) * (window_width - 1);
+		projected_point.y = (projected_point.y / 2.0 + 0.5) * (window_height - 1);
+
+
+		triangle->points[vIndex] = projected_point;
+	}
+}
+
 void update(void)
 {
 	uint32_t time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
@@ -144,17 +196,20 @@ void update(void)
 
 	num_triangles_to_render = 0;
 
-	//mesh.rotation.x += 1.0f * delta_time;
-	//mesh.rotation.y += 3.141592f * delta_time;
-	//mesh.rotation.z += 1.0f * delta_time;
+	mesh.rotation.x += 1.0f * delta_time;
+	mesh.rotation.y += 1.141592f * delta_time;
+	mesh.rotation.z += 1.0f * delta_time;
 
-	/*mesh.scale.x = 4;
-	mesh.scale.y = 4;
-	mesh.scale.z = 4;*/
+	/*mesh.rotation.y = M_PI / 4;
+	mesh.rotation.x = M_PI / 4;*/
+
+	/*mesh.scale.x += 1 * delta_time;
+	mesh.scale.y += 1 * delta_time;
+	mesh.scale.z += 1 * delta_time;*/
 
 	//mesh.translation.x = 5;
-	//mesh.translation.y += 0.005f * delta_time;
-	mesh.translation.z = 5;
+	//mesh.translation.y -= 0.3 * delta_time;
+	mesh.translation.z = 7;
 
 	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
@@ -174,8 +229,6 @@ void update(void)
 	normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
 	normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
 
-	//camera.position.x += 1 * delta_time;
-	//camera.position.y += 1 * delta_time;
 	vec3_t up_direction = { 0, 1, 0 };
 	
 	vec3_t target = { 0, 0, 1 };
@@ -185,12 +238,20 @@ void update(void)
 	target = vec3_add(camera.position, camera.direction);
 
 	mat4_t view_matrix = mat4_look_at(camera.position, target, up_direction);
-	//world_matrix = mat4_mul_mat4(view_matrix, world_matrix);
-	//normal_matrix = mat4_mul_mat4(view_matrix, normal_matrix);
+
+	// Light in view space
+	light.view = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t) {
+		.x = light.direction.x,
+		.y = light.direction.y,
+		.z = light.direction.z,
+		.w = 0
+	}));
 
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
 	{
+		//if (i != 4) continue;
+
 		face_t mesh_face = mesh.faces[i];
 		vec3_t face_vertices[3] = {
 			mesh.vertices[mesh_face.a],
@@ -232,52 +293,33 @@ void update(void)
 			continue;
 		}
 
-		light.view = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t){
-			.x = light.direction.x,
-			.y = light.direction.y,
-			.z = light.direction.z,
-			.w = 0
-		}));
 
-		float light_intencity_factor = vec3_dot(mesh_face.normal, vec3_negative(light.view));
-		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intencity_factor);
+		// Clipping
+		polygon_t polygon = create_polygon_from_triangle(
+			face_vertices[0], face_vertices[1], face_vertices[2],
+			mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv,
+			face_normals[0], face_normals[1], face_normals[2]
+		);
+		
+		clip_polygon(&polygon);
 
-		triangle_t projected_triangle = {
-			.points = {0},
-			.texcoords = {
-				mesh_face.a_uv,
-				mesh_face.b_uv,
-				mesh_face.c_uv,
-			},
-			.normals = {
-				face_normals[0],
-				face_normals[1],
-				face_normals[2],
-			},
-			.color = triangle_color
-		};
-
-		for (int vIndex = 0; vIndex < 3; vIndex++)
+		for (int i = 1; i < polygon.num_vertices - 1; ++i)
 		{
-			vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, vec4_from_vec3(face_vertices[vIndex]));
-			
-			//Scale into the view
-			projected_point.x *= (window_width / 4.0);
-			projected_point.y *= (window_height / 4.0);
+			int index0 = 0;
+			int index1 = i;
+			int index2 = i + 1;
 
-			//Apply projection translate
-			projected_point.x += (window_width / 2.0);
-			projected_point.y += (window_height / 2.0);
+			triangle_t triangle = create_triangle(&polygon, index0, index1, index2);
 
+			project_triangle(&triangle);
 
-			projected_triangle.points[vIndex] = projected_point;
+			if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
+			{
+				triangles_to_render[num_triangles_to_render] = triangle;
+				num_triangles_to_render += 1;
+			}
 		}
 
-		if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
-		{
-			triangles_to_render[num_triangles_to_render] = projected_triangle;
-			num_triangles_to_render += 1;
-		}
 		
 	}
 }

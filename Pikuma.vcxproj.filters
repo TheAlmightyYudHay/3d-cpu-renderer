@@ -51,6 +51,9 @@
     <ClCompile Include="src\camera.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\clipping.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -100,6 +103,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\clipping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

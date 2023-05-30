@@ -38,6 +38,11 @@ vec3_t vec3_rotate_z(vec3_t v, float angle)
 // Vector 2D functions implementations
 ///////////////////////////////////////////////////////////////////////////////////////
 
+vec2_t vec2_new(float x, float y)
+{
+	return (vec2_t) { x, y };
+}
+
 float vec2_length_squared(vec2_t v)
 {
 	return v.x * v.x + v.y * v.y;
@@ -99,6 +104,11 @@ float vec3_length_squared(vec3_t v)
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
+
+vec3_t vec3_new(float x, float y, float z)
+{
+	return (vec3_t) {x, y, z};
+}
 
 float vec3_length(vec3_t v)
 {
@@ -162,6 +172,11 @@ void vec3_normalize(vec3_t* v)
 vec3_t vec3_negative(vec3_t v)
 {
 	return (vec3_t) {.x = -v.x, .y = -v.y, .z = -v.z};
+}
+
+vec3_t vec3_clone(vec3_t* v)
+{
+	return (vec3_t) {.x = v->x, .y = v->y, .z = v->z};
 }
 
 

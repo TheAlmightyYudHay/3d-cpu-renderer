@@ -118,7 +118,7 @@ mat4_t mat4_make_perspective(float fov, float aspect, float zNear, float zFar)
 			{aspect/tan(fov/2.0),               0,                 0,                          0},
 			{                  0, -1/tan(fov/2.0),                 0,                          0},
 			{                  0,               0, zFar/(zFar-zNear), (-zFar*zNear)/(zFar-zNear)},
-			{                  0,			    0,                 1.0,                          0}
+			{                  0,			    0,               1.0,                          0}
 		}
 	};
 }
