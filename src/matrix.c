@@ -139,7 +139,7 @@ vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v)
 
 mat4_t mat4_look_at(vec3_t eye, vec3_t target, vec3_t up)
 {
-	vec3_t z = vec3_sub(target, eye);
+	vec3_t z = target;
 	vec3_normalize(&z);
 	vec3_t x = vec3_cross(up, z);
 	vec3_normalize(&x);

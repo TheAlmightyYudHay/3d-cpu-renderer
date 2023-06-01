@@ -22,26 +22,21 @@
 // d - backface culling disabled (~flag & 8 == 0)
 // l - lighting enabled (flag & 32 == 1)
 ////////////////////////////////////////////////////////////////////////
-
 extern const int wireframe_mask;
 extern const int vertices_mask;
 extern const int filled_mask;
 extern const int backface_culling_mask;
 extern const int textured_mask;
 extern const int lighting_mask;
+//////////////////////////////////////////////////////////////////////// 
 
-////////////////////////////////////////////////////////////////////////
-
-extern SDL_Window* window;
-extern SDL_Renderer* renderer;
-extern SDL_Texture* color_buffer_texture;
-
-extern uint32_t* color_buffer;
-extern float* z_buffer;
-extern int window_width;
-extern int window_height;
-extern const int pixelGridSize;
-
+int get_window_width(void);
+int get_window_height(void);
+SDL_Renderer* get_renderer(void);
+float* get_z_buffer(void);
+float get_z_buffer_at(int x, int y);
+void update_z_buffer_at(int x, int y, float value);
+uint32_t* get_color_buffer(void);
 bool initialize_window(void);
 void render_color_buffer(void);
 void clear_z_buffer(void);

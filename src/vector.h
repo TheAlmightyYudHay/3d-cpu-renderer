@@ -51,6 +51,7 @@ vec3_t vec3_div(vec3_t v, float factor);
 vec3_t vec3_cross(vec3_t v1, vec3_t v2);
 double vec3_dot(vec3_t v1, vec3_t v2);
 void vec3_normalize(vec3_t* v);
+vec3_t vec3_normalized(vec3_t v);
 vec3_t vec3_negative(vec3_t v);
 vec3_t vec3_clone(vec3_t* v);
 

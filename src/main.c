@@ -30,22 +30,11 @@ void setup(void)
 {
 	rendering_mode = wireframe_mask | backface_culling_mask;
 
-	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
-	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
 
-	color_buffer_texture = SDL_CreateTexture(
-		renderer,
-		SDL_PIXELFORMAT_RGBA32,
-		SDL_TEXTUREACCESS_STREAMING,
-		window_width,
-		window_height
-	);
+	void normalize_light_directon();
 
-
-	vec3_normalize(&light.direction);
-
-	float aspecty = window_height / (float)window_width;
-	float aspectx = window_width / (float)window_height;
+	float aspecty = get_window_height() / (float)get_window_width();
+	float aspectx = get_window_width() / (float)get_window_height();
 	float fovy = M_PI * 60.0 / 180.0;
 	float fovx = 2 * atan(aspectx * tan(fovy / 2.0));
 	float zNear = 0.1;
@@ -56,62 +45,114 @@ void setup(void)
 	projection_matrix = mat4_make_perspective(fovy, aspecty, zNear, zFar);
 
 	// Load hardcoded texture data
-	load_png_texture_data("./assets/crab.png");
+	load_png_texture_data("./assets/drone.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/crab.obj");
+	load_obj_file_data("./assets/drone.obj");
 }
 
 void process_input(void)
 {
 	SDL_Event event;
-	SDL_PollEvent(&event);
-
-	switch (event.type)
+	while (SDL_PollEvent(&event))
 	{
+		switch (event.type)
+		{
 		case SDL_QUIT:
 			is_running = false;
 			break;
 		case SDL_KEYDOWN:
 			if (event.key.keysym.sym == SDLK_ESCAPE)
+			{
 				is_running = false;
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_1)
+			{
 				rendering_mode = wireframe_mask | vertices_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_2)
+			{
 				rendering_mode = wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_3)
+			{
 				rendering_mode = filled_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_4)
+			{
 				rendering_mode = filled_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_5)
+			{
 				rendering_mode = textured_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_6)
+			{
 				rendering_mode = textured_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_c)
+			{
 				rendering_mode ^= backface_culling_mask;
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_f)
+			{
 				rendering_mode ^= lighting_mask;
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_UP)
-				camera.position.y += 3.0 * delta_time;
+			{
+				change_camera_position((vec3_t) {0, 5 * delta_time, 0});
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_DOWN)
-				camera.position.y -= 3.0 * delta_time;
+			{
+				change_camera_position((vec3_t) { 0, -5 * delta_time, 0 });
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_a)
-				camera.yaw_angle -= 1.0 * delta_time;
+			{
+				change_camera_yaw(-3 * delta_time);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_d)
-				camera.yaw_angle += 1.0 * delta_time;
+			{
+				change_camera_yaw(3 * delta_time);
+				break;
+			}
+			if (event.key.keysym.sym == SDLK_q)
+			{
+				change_camera_pitch(-3 * delta_time);
+				break;
+			}
+			if (event.key.keysym.sym == SDLK_e)
+			{
+				change_camera_pitch(3 * delta_time);
+				break;
+			}
 			if (event.key.keysym.sym == SDLK_w)
 			{
-				camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-				camera.position = vec3_add(camera.position, camera.forward_velocity);
+				vec3_t offset = vec3_mul(get_camera_directon(), 5.0 * delta_time);
+				change_camera_position(offset);
+				break;
 			}
 			if (event.key.keysym.sym == SDLK_s)
 			{
-				camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-				camera.position = vec3_sub(camera.position, camera.forward_velocity);
+				vec3_t offset = vec3_mul(get_camera_directon(), -5.0 * delta_time);
+				change_camera_position(offset);
+				break;
 			}
 			break;
 		default:
 			break;
+		}
 	}
 }
 
@@ -159,7 +200,7 @@ triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index
 	if (rendering_mode & lighting_mask)
 	{
 		vec3_t face_normal = calculate_face_normal(polygon->vertices[index0], polygon->vertices[index1], polygon->vertices[index2]);
-		float light_intencity_factor = vec3_dot(face_normal, vec3_negative(light.view));
+		float light_intencity_factor = vec3_dot(face_normal, vec3_negative(get_light_view()));
 		triangle.color = light_apply_intensity(triangle.color, light_intencity_factor);
 	}
 
@@ -173,8 +214,8 @@ void project_triangle(triangle_t* triangle)
 		vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, triangle->points[vIndex]);
 
 		////Scale into the view
-		projected_point.x = (projected_point.x / 2.0 + 0.5) * (window_width - 1);
-		projected_point.y = (projected_point.y / 2.0 + 0.5) * (window_height - 1);
+		projected_point.x = (projected_point.x / 2.0 + 0.5) * (get_window_width() - 1);
+		projected_point.y = (projected_point.y / 2.0 + 0.5) * (get_window_height() - 1);
 
 
 		triangle->points[vIndex] = projected_point;
@@ -196,9 +237,9 @@ void update(void)
 
 	num_triangles_to_render = 0;
 
-	mesh.rotation.x += 1.0f * delta_time;
+	/*mesh.rotation.x += 1.0f * delta_time;
 	mesh.rotation.y += 1.141592f * delta_time;
-	mesh.rotation.z += 1.0f * delta_time;
+	mesh.rotation.z += 1.0f * delta_time;*/
 
 	/*mesh.rotation.y = M_PI / 4;
 	mesh.rotation.x = M_PI / 4;*/
@@ -231,21 +272,27 @@ void update(void)
 
 	vec3_t up_direction = { 0, 1, 0 };
 	
-	vec3_t target = { 0, 0, 1 };
-	mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw_angle);
-	camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+	vec3_t target = { 0, 0, 100 };
 
-	target = vec3_add(camera.position, camera.direction);
+	mat4_t camera_yaw_rotation = mat4_make_rotation_y(get_camera_yaw());
+	mat4_t camera_pitch_rotation = mat4_make_rotation_x(get_camera_pitch());
+	mat4_t rotation_matrix = mat4_mul_mat4(camera_yaw_rotation, camera_pitch_rotation);
 
-	mat4_t view_matrix = mat4_look_at(camera.position, target, up_direction);
+	target = vec3_from_vec4(mat4_mul_vec4(rotation_matrix, vec4_from_vec3(target)));
+	
+	set_camera_direction(vec3_normalized(target));
+
+	mat4_t view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
 
 	// Light in view space
-	light.view = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t) {
-		.x = light.direction.x,
-		.y = light.direction.y,
-		.z = light.direction.z,
+	vec3_t new_view_direction = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t) {
+		.x = get_light_direction().x,
+		.y = get_light_direction().y,
+		.z = get_light_direction().z,
 		.w = 0
 	}));
+
+	set_view_light(new_view_direction);
 
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
@@ -334,6 +381,9 @@ void draw_vertices(triangle_t triangle, uint32_t color)
 
 void render(void)
 {
+	clear_z_buffer();
+	clear_color_buffer(0xFF000000);
+
 	draw_grid(0xFF333333);
 
 	for (int i = 0; i < num_triangles_to_render; i++)
@@ -372,17 +422,10 @@ void render(void)
 	}
 
 	render_color_buffer();
-	
-	clear_z_buffer();
-	clear_color_buffer(0xFF000000);
-
-	SDL_RenderPresent(renderer);
 }
 
 void free_resources(void)
 {
-	free(color_buffer);
-	free(z_buffer);
 	upng_free(png_texture);
 	array_free(mesh.faces);
 	array_free(mesh.vertices);
