@@ -453,6 +453,7 @@ void render(void)
 
 void free_resources(void)
 {
+	destroy_window();
 	free_mesh_container();
 }
 
@@ -469,7 +470,6 @@ int main(int argc, char* args[])
 		render();
 	}
 
-	destroy_window();
 	free_resources();
 
 	return 0;

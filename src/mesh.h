@@ -4,13 +4,6 @@
 #include "triangle.h"
 #include "texture.h"
 
-#define N_CUBE_VERTICES 8
-extern vec3_t cube_vertices[N_CUBE_VERTICES];
-
-#define N_CUBE_FACES (6 * 2)
-extern face_t cube_faces[N_CUBE_FACES];
-
-
 typedef struct
 {
 	vec3_t* vertices;
@@ -19,6 +12,7 @@ typedef struct
 	vec3_t scale;
 	vec3_t translation;
 	texture_t mesh_texture;
+
 	int last_triangle_index;
 } mesh_t;
 
@@ -27,7 +21,6 @@ typedef struct {
 	int meshes_count;
 } mesh_container_t;
 
-//void load_cube_mesh_data(void);
 void load_obj_file_data(char* filename, char* texture_path);
 mesh_t* get_mesh_item(int index);
 int get_mesh_count();
