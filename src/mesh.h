@@ -2,6 +2,7 @@
 
 #include "vector.h"
 #include "triangle.h"
+#include "texture.h"
 
 #define N_CUBE_VERTICES 8
 extern vec3_t cube_vertices[N_CUBE_VERTICES];
@@ -17,8 +18,17 @@ typedef struct
 	vec3_t rotation;
 	vec3_t scale;
 	vec3_t translation;
+	texture_t mesh_texture;
+	int last_triangle_index;
 } mesh_t;
 
-extern mesh_t mesh;
-void load_cube_mesh_data(void);
-void load_obj_file_data(char* filename);
+typedef struct {
+	mesh_t* meshes_list;
+	int meshes_count;
+} mesh_container_t;
+
+//void load_cube_mesh_data(void);
+void load_obj_file_data(char* filename, char* texture_path);
+mesh_t* get_mesh_item(int index);
+int get_mesh_count();
+void free_mesh_container();

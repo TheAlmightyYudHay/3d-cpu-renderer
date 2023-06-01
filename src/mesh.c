@@ -3,13 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 
-mesh_t mesh = 
+static mesh_t mesh_sample = 
 {
 	.vertices = NULL,
 	.faces = NULL,
 	.rotation = {.x = 0, .y = 0, .z = 0},
 	.scale = {.x = 1.0f, .y = 1.0f, .z = 1.0f},
 	.translation = {.x = 0.0f, .y = 0.0f, .z = 0.0f}
+};
+
+static mesh_container_t mesh_container =
+{
+	.meshes_list = NULL,
+	.meshes_count = 0
 };
 
 vec3_t cube_vertices[N_CUBE_VERTICES] = {
@@ -44,24 +50,24 @@ face_t cube_faces[N_CUBE_FACES] = {
 	{.a = 6, .b = 1, .c = 4, .a_uv = { 0, 0 }, .b_uv = { 1, 1 }, .c_uv = { 1, 0 }, .color = 0xFFFFFFFF }
 };
 
-void load_cube_mesh_data(void)
-{
-	for (int i = 0; i < N_CUBE_VERTICES; i++)
-	{
-		array_push(mesh.vertices, cube_vertices[i]);
-	}
-
-	for (int i = 0; i < N_CUBE_FACES; i++)
-	{
-		face_t face = cube_faces[i];
-
-		face.a -= 1;
-		face.b -= 1;
-		face.c -= 1;
-
-		array_push(mesh.faces, face);
-	}
-}
+//void load_cube_mesh_data(void)
+//{
+//	for (int i = 0; i < N_CUBE_VERTICES; i++)
+//	{
+//		array_push(mesh.vertices, cube_vertices[i]);
+//	}
+//
+//	for (int i = 0; i < N_CUBE_FACES; i++)
+//	{
+//		face_t face = cube_faces[i];
+//
+//		face.a -= 1;
+//		face.b -= 1;
+//		face.c -= 1;
+//
+//		array_push(mesh.faces, face);
+//	}
+//}
 
 vec3_t read_mesh_vertex(char* line)
 {
@@ -110,8 +116,10 @@ vec3_t read_mesh_normal(char* line)
 	return normal;
 }
 
-void load_obj_file_data(char* filename)
-{
+void load_obj_file_data(char* filename, char* texture_path)
+{	
+	mesh_t mesh = mesh_sample;
+
 	FILE* fp;
 	char line[128];
 
@@ -155,4 +163,37 @@ void load_obj_file_data(char* filename)
 	array_free(normal_buffer);
 
 	fclose(fp);
+
+	mesh.mesh_texture = load_png_texture_data(texture_path);
+
+	array_push(mesh_container.meshes_list, mesh);
+	mesh_container.meshes_count += 1;
+}
+
+mesh_t* get_mesh_item(int index)
+{
+	if (index >= mesh_container.meshes_count) return NULL;
+	return &mesh_container.meshes_list[index];
+}
+
+int get_mesh_count()
+{
+	return mesh_container.meshes_count;
+}
+
+static void free_mesh(mesh_t* mesh)
+{
+	array_free(mesh->faces);
+	array_free(mesh->vertices);
+	free_texture(&(mesh->mesh_texture));
+}
+
+void free_mesh_container()
+{
+	for (int i = 0; i < mesh_container.meshes_count; i++)
+	{
+		free_mesh(get_mesh_item(i));
+	}
+
+	array_free(mesh_container.meshes_list);
 }

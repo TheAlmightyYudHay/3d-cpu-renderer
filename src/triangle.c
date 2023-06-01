@@ -150,11 +150,11 @@ vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p)
 	return weights;
 }
 
-void draw_texel(
+static void draw_texel(
 	int x0, int y0, float z0, float w0, float u0, float v0, vec3_t n0,
 	int x1, int y1, float z1, float w1, float u1, float v1, vec3_t n1,
 	int x2, int y2, float z2, float w2, float u2, float v2, vec3_t n2,
-	int x, int y, uint32_t* texture, bool is_lit
+	int x, int y, texture_t* texture, bool is_lit
 ) {
 	vec3_t weights = barycentric_weights(
 		(vec2_t) {x0, y0},
@@ -187,10 +187,10 @@ void draw_texel(
 	uv.x = uv.x < 0.0 ? 0.0 : (uv.x > 1.0 ? uv.x - floor(uv.x) : uv.x);
 	uv.y = uv.y < 0.0 ? 0.0 : (uv.y > 1.0 ? uv.y - floor(uv.y) : uv.y);
 
-	int col = uv.x * (texture_width - 1);
-	int row = (1 - uv.y) * (texture_height - 1);
+	int col = uv.x * (texture->texture_width - 1);
+	int row = (1 - uv.y) * (texture->texture_height - 1);
 
-	uint32_t result_color = texture[row * texture_width + col];
+	uint32_t result_color = texture->mesh_texture[row * texture->texture_width + col];
 
 	if (is_lit)
 	{
@@ -202,7 +202,7 @@ void draw_texel(
 	draw_pixel(x, y, result_color);
 }
 
-void draw_textured_triangle(triangle_t triangle, uint32_t* texture, bool is_lit)
+void draw_textured_triangle(triangle_t triangle, texture_t* texture, bool is_lit)
 {
 	int x0 = (int)triangle.points[0].x;
 	int y0 = (int)triangle.points[0].y;

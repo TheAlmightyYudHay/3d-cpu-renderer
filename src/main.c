@@ -45,10 +45,12 @@ void setup(void)
 	projection_matrix = mat4_make_perspective(fovy, aspecty, zNear, zFar);
 
 	// Load hardcoded texture data
-	load_png_texture_data("./assets/drone.png");
+	//load_png_texture_data("./assets/drone.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/drone.obj");
+	load_obj_file_data("./assets/cube.obj", "./assets/pikuma.png");
+	load_obj_file_data("./assets/drone.obj", "./assets/drone.png");
+	load_obj_file_data("./assets/cube.obj", "./assets/cube.png");
 }
 
 void process_input(void)
@@ -237,41 +239,10 @@ void update(void)
 
 	num_triangles_to_render = 0;
 
-	/*mesh.rotation.x += 1.0f * delta_time;
-	mesh.rotation.y += 1.141592f * delta_time;
-	mesh.rotation.z += 1.0f * delta_time;*/
-
-	/*mesh.rotation.y = M_PI / 4;
-	mesh.rotation.x = M_PI / 4;*/
-
-	/*mesh.scale.x += 1 * delta_time;
-	mesh.scale.y += 1 * delta_time;
-	mesh.scale.z += 1 * delta_time;*/
-
-	//mesh.translation.x = 5;
-	//mesh.translation.y -= 0.3 * delta_time;
-	mesh.translation.z = 7;
-
-	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-	mat4_t rotate_x_matrix = mat4_make_rotation_x(mesh.rotation.x);
-	mat4_t rotate_y_matrix = mat4_make_rotation_y(mesh.rotation.y);
-	mat4_t rotate_z_matrix = mat4_make_rotation_z(mesh.rotation.z);
-	
-	mat4_t world_matrix = mat4_identity();
-	world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-	world_matrix = mat4_mul_mat4(rotate_z_matrix, world_matrix);
-	world_matrix = mat4_mul_mat4(rotate_y_matrix, world_matrix);
-	world_matrix = mat4_mul_mat4(rotate_x_matrix, world_matrix);
-	world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
-
-	mat4_t normal_matrix = mat4_identity();
-	normal_matrix = mat4_mul_mat4(rotate_z_matrix, normal_matrix);
-	normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
-	normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
-
+	//////////////////////////////////////////////////////////////////////
+	// SETUP CAMERA AND LIGHT
+	//////////////////////////////////////////////////////////////////////
 	vec3_t up_direction = { 0, 1, 0 };
-	
 	vec3_t target = { 0, 0, 100 };
 
 	mat4_t camera_yaw_rotation = mat4_make_rotation_y(get_camera_yaw());
@@ -279,7 +250,7 @@ void update(void)
 	mat4_t rotation_matrix = mat4_mul_mat4(camera_yaw_rotation, camera_pitch_rotation);
 
 	target = vec3_from_vec4(mat4_mul_vec4(rotation_matrix, vec4_from_vec3(target)));
-	
+
 	set_camera_direction(vec3_normalized(target));
 
 	mat4_t view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
@@ -292,82 +263,123 @@ void update(void)
 		.w = 0
 	}));
 
-	set_view_light(new_view_direction);
+	set_view_light(vec3_normalized(new_view_direction));
+	//////////////////////////////////////////////////////////////////////
 
-	int num_faces = array_length(mesh.faces);
-	for (int i = 0; i < num_faces; i++)
+	for (int i = 0; i < get_mesh_count(); i++)
 	{
-		//if (i != 4) continue;
+		mesh_t* mesh = get_mesh_item(i);
 
-		face_t mesh_face = mesh.faces[i];
-		vec3_t face_vertices[3] = {
-			mesh.vertices[mesh_face.a],
-			mesh.vertices[mesh_face.b],
-			mesh.vertices[mesh_face.c],
-		};
+		mesh->last_triangle_index = 0;
 
-		vec3_t face_normals[3] = {
-			mesh_face.a_normal,
-			mesh_face.b_normal,
-			mesh_face.c_normal
-		};
+		mesh->rotation.x += 1.0f * delta_time;
+		mesh->rotation.y += 1.141592f * delta_time;
+		mesh->rotation.z += 1.0f * delta_time;
 
+		/*mesh->rotation.y = M_PI / 4;
+		mesh->rotation.x = M_PI / 4;*/
 
-		for (int vIndex = 0; vIndex < 3; vIndex++)
+		/*mesh->scale.x += 1 * delta_time;
+		mesh->scale.y += 1 * delta_time;
+		mesh->scale.z += 1 * delta_time;*/
+
+		//mesh->translation.x = 5;
+		//mesh->translation.y -= 0.3 * delta_time;
+		mesh->translation.x = 3 * i - 3;
+		mesh->translation.z = 3 * i + 3;
+
+		mat4_t scale_matrix = mat4_make_scale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
+		mat4_t translation_matrix = mat4_make_translation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
+		mat4_t rotate_x_matrix = mat4_make_rotation_x(mesh->rotation.x);
+		mat4_t rotate_y_matrix = mat4_make_rotation_y(mesh->rotation.y);
+		mat4_t rotate_z_matrix = mat4_make_rotation_z(mesh->rotation.z);
+
+		mat4_t world_matrix = mat4_identity();
+		world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+		world_matrix = mat4_mul_mat4(rotate_z_matrix, world_matrix);
+		world_matrix = mat4_mul_mat4(rotate_y_matrix, world_matrix);
+		world_matrix = mat4_mul_mat4(rotate_x_matrix, world_matrix);
+		world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+
+		mat4_t normal_matrix = mat4_identity();
+		normal_matrix = mat4_mul_mat4(rotate_z_matrix, normal_matrix);
+		normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
+		normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
+
+		int num_faces = array_length(mesh->faces);
+		for (int i = 0; i < num_faces; i++)
 		{
-			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
-			vec4_t transformed_normal = {
-				.x = face_normals[vIndex].x,
-				.y = face_normals[vIndex].y,
-				.z = face_normals[vIndex].z,
-				.w = 0
+			face_t mesh_face = mesh->faces[i];
+			vec3_t face_vertices[3] = {
+				mesh->vertices[mesh_face.a],
+				mesh->vertices[mesh_face.b],
+				mesh->vertices[mesh_face.c],
 			};
 
-			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
-			transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
-			
-			transformed_normal = mat4_mul_vec4(normal_matrix, transformed_normal);
-			transformed_normal = mat4_mul_vec4(view_matrix, transformed_normal);
-
-			face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
-			face_normals[vIndex] = vec3_from_vec4(transformed_normal);
-		}
-
-		mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
-		
-		if (is_should_be_culled(face_vertices[0], mesh_face.normal))
-		{
-			continue;
-		}
+			vec3_t face_normals[3] = {
+				mesh_face.a_normal,
+				mesh_face.b_normal,
+				mesh_face.c_normal
+			};
 
 
-		// Clipping
-		polygon_t polygon = create_polygon_from_triangle(
-			face_vertices[0], face_vertices[1], face_vertices[2],
-			mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv,
-			face_normals[0], face_normals[1], face_normals[2]
-		);
-		
-		clip_polygon(&polygon);
-
-		for (int i = 1; i < polygon.num_vertices - 1; ++i)
-		{
-			int index0 = 0;
-			int index1 = i;
-			int index2 = i + 1;
-
-			triangle_t triangle = create_triangle(&polygon, index0, index1, index2);
-
-			project_triangle(&triangle);
-
-			if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
+			for (int vIndex = 0; vIndex < 3; vIndex++)
 			{
-				triangles_to_render[num_triangles_to_render] = triangle;
-				num_triangles_to_render += 1;
-			}
-		}
+				vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
+				vec4_t transformed_normal = {
+					.x = face_normals[vIndex].x,
+					.y = face_normals[vIndex].y,
+					.z = face_normals[vIndex].z,
+					.w = 0
+				};
 
-		
+				transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+				transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+
+				transformed_normal = mat4_mul_vec4(normal_matrix, transformed_normal);
+				transformed_normal = mat4_mul_vec4(view_matrix, transformed_normal);
+
+				face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
+				face_normals[vIndex] = vec3_from_vec4(transformed_normal);
+			}
+
+			mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
+
+			if (is_should_be_culled(face_vertices[0], mesh_face.normal))
+			{
+				continue;
+			}
+
+
+			// Clipping
+			polygon_t polygon = create_polygon_from_triangle(
+				face_vertices[0], face_vertices[1], face_vertices[2],
+				mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv,
+				face_normals[0], face_normals[1], face_normals[2]
+			);
+
+			clip_polygon(&polygon);
+
+			for (int i = 1; i < polygon.num_vertices - 1; ++i)
+			{
+				int index0 = 0;
+				int index1 = i;
+				int index2 = i + 1;
+
+				triangle_t triangle = create_triangle(&polygon, index0, index1, index2);
+
+				project_triangle(&triangle);
+
+				if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
+				{
+					triangles_to_render[num_triangles_to_render] = triangle;
+					mesh->last_triangle_index = num_triangles_to_render;
+					num_triangles_to_render += 1;
+				}
+			}
+
+
+		}
 	}
 }
 
@@ -386,49 +398,62 @@ void render(void)
 
 	draw_grid(0xFF333333);
 
-	for (int i = 0; i < num_triangles_to_render; i++)
+	if (get_mesh_count() > 0)
 	{
-		triangle_t triangle = triangles_to_render[i];
+		int current_mesh_index = 0;
+		mesh_t* current_mesh = get_mesh_item(current_mesh_index);
 
-		if (rendering_mode & filled_mask)
-		{
-			fill_triangle(triangle, triangle.color);
-		}
-
-		if (rendering_mode & textured_mask)
-		{
-			draw_textured_triangle(triangle, mesh_texture, rendering_mode & lighting_mask);
-		}
-
-		if (rendering_mode & vertices_mask)
-		{
-			draw_vertices(triangle, 0xFFFF0000);
-		}
-	}
-	if (rendering_mode & wireframe_mask)
-	{
 		for (int i = 0; i < num_triangles_to_render; i++)
 		{
+			if (current_mesh->last_triangle_index < i)
+			{
+				current_mesh_index++;
+				current_mesh = get_mesh_item(current_mesh_index);
+			}
+
 			triangle_t triangle = triangles_to_render[i];
 
-			draw_wireframe(
-				triangle.points[0].x, triangle.points[0].y,
-				triangle.points[1].x, triangle.points[1].y,
-				triangle.points[2].x, triangle.points[2].y,
-				0xFF00FFFF
-			);
+			if (rendering_mode & filled_mask)
+			{
+				fill_triangle(triangle, triangle.color);
+			}
 
+			if (rendering_mode & textured_mask)
+			{
+				draw_textured_triangle(triangle, &current_mesh->mesh_texture, rendering_mode & lighting_mask);
+
+			}
+
+			if (rendering_mode & vertices_mask)
+			{
+				draw_vertices(triangle, 0xFFFF0000);
+			}
+		}
+
+		if (rendering_mode & wireframe_mask)
+		{
+			for (int i = 0; i < num_triangles_to_render; i++)
+			{
+				triangle_t triangle = triangles_to_render[i];
+
+				draw_wireframe(
+					triangle.points[0].x, triangle.points[0].y,
+					triangle.points[1].x, triangle.points[1].y,
+					triangle.points[2].x, triangle.points[2].y,
+					0xFF00FFFF
+				);
+
+			}
 		}
 	}
+
 
 	render_color_buffer();
 }
 
 void free_resources(void)
 {
-	upng_free(png_texture);
-	array_free(mesh.faces);
-	array_free(mesh.vertices);
+	free_mesh_container();
 }
 
 int main(int argc, char* args[])

@@ -31,4 +31,4 @@ typedef struct {
 
 vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);
 void fill_triangle(triangle_t triangle, uint32_t color);
-void draw_textured_triangle(triangle_t triangle, uint32_t* texture, bool is_lit);
+void draw_textured_triangle(triangle_t triangle, texture_t* texture, bool is_lit);
