@@ -51,21 +51,21 @@ face_t read_mesh_face(char* line, tex2_t* uv_buffer, vec3_t* normal_buffer)
 	return f;
 }
 
-tex2_t read_mesh_uv(char* line)
+tex2_t read_mesh_uv(const char* line)
 {
 	tex2_t uv;
 	sscanf_s(line, "vt %f %f", &uv.u, &uv.v);
 	return uv;
 }
 
-vec3_t read_mesh_normal(char* line)
+vec3_t read_mesh_normal(const char* line)
 {
 	vec3_t normal;
 	sscanf_s(line, "vn %f %f %f", &normal.x, &normal.y, &normal.z);
 	return normal;
 }
 
-void load_obj_file_data(char* filename, char* texture_path)
+void load_obj_file_data(const char* filename, const char* texture_path)
 {	
 	mesh_t mesh = mesh_sample;
 

@@ -21,7 +21,7 @@ typedef struct {
 	int meshes_count;
 } mesh_container_t;
 
-void load_obj_file_data(char* filename, char* texture_path);
+void load_obj_file_data(const char* filename, const char* texture_path);
 mesh_t* get_mesh_item(int index);
 int get_mesh_count();
 void free_mesh_container();

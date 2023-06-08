@@ -1,63 +1,91 @@
 #pragma once
 
-typedef struct
+class Vector2;
+class Vector3;
+class Vector4;
+
+
+///////////////////////////////////////////
+// Vector3
+///////////////////////////////////////////
+
+class Vector3
 {
-	float x, y;
-} vec2_t;
+public:
+	static Vector3 Zero() { return Vector3(0, 0, 0); }
 
-typedef struct
+	static float Length(const Vector3& v);
+	static float LengthSquared(const Vector3& v);
+	static Vector3 Cross(const Vector3& v1, const Vector3& v2);
+	static float Dot(const Vector3& v1, const Vector3& v2);
+	static Vector3 Normalized(const Vector3& v);
+	static Vector3 Negative(const Vector3& v);
+
+	Vector3() : mX(0), mY(0), mZ(0) {}	
+	Vector3(float x, float y, float z) : mX(x), mY(y), mZ(z) {}
+
+	float Length() const;
+	float LengthSquared() const;
+	void Normalize();
+
+	friend Vector3 operator+ (const Vector3& v1, const Vector3& v2);
+	friend Vector3 operator- (const Vector3& v1, const Vector3& v2);
+	friend Vector3 operator* (const Vector3& v, float factor);
+	friend Vector3 operator* (float factor, const Vector3& v);
+	friend Vector3 operator/ (const Vector3& v, float factor);
+
+	Vector4 ToVector4() const;
+
+private:
+	float mX, mY, mZ;
+};
+
+///////////////////////////////////////////
+// Vector2
+///////////////////////////////////////////
+
+class Vector2
 {
-	int x, y;
-} vec2_int_t;
+public:
+	static Vector2 Zero() { return Vector2(0, 0); }
 
-typedef struct
+	static float Length(const Vector2& v);
+	static float LengthSquared(const Vector2& v);
+	static float Dot(const Vector2& v1, const Vector2& v2);
+	static Vector2 Normalized(const Vector2& v);
+	static Vector2 Negative(const Vector2& v);
+
+	Vector2() : mX(0), mY(0) {}
+	Vector2(float x, float y) : mX(x), mY(y) {}
+
+	float Length() const;
+	float LengthSquared() const;
+	void Normalize();
+
+	friend Vector2 operator+ (const Vector2& v1, const Vector2& v2);
+	friend Vector2 operator- (const Vector2& v1, const Vector2& v2);
+	friend Vector2 operator* (const Vector2& v, float factor);
+	friend Vector2 operator* (float factor, const Vector2& v);
+	friend Vector2 operator/ (const Vector2& v, float factor);
+
+	Vector4 toVector4() const;
+
+private:
+	float mX, mY;
+};
+
+///////////////////////////////////////////
+// Vector4
+///////////////////////////////////////////
+
+class Vector4
 {
-	float x, y, z;
-} vec3_t;
+public:
+	Vector4(float x, float y, float z, float w = 1) : mX(x), mY(y), mZ(z), mW(w) {}
 
-typedef struct
-{
-	float x, y, z, w;
-} vec4_t;
+	Vector2 ToVector2() const;
+	Vector3 ToVector3() const;
+private:
+	float mX, mY, mZ, mW;
+};
 
-vec3_t vec3_rotate_x(vec3_t v, float angle);
-vec3_t vec3_rotate_y(vec3_t v, float angle);
-vec3_t vec3_rotate_z(vec3_t v, float angle);
-
-///////////////////////////////////////////////////////////////////////////////////////
-// Vector 2D functions
-///////////////////////////////////////////////////////////////////////////////////////
-vec2_t vec2_new(float x, float y);
-float vec2_length(vec2_t v);
-float vec2_length_squared(vec2_t v);
-vec2_t vec2_add(vec2_t v1, vec2_t v2);
-vec2_t vec2_sub(vec2_t v1, vec2_t v2);
-vec2_t vec2_mul(vec2_t v, float factor);
-vec2_t vec2_div(vec2_t v, float factor);
-double vec2_dot(vec2_t v1, vec2_t v2);
-void vec2_normalize(vec2_t* v);
-
-
-///////////////////////////////////////////////////////////////////////////////////////
-// Vector 3D functions
-///////////////////////////////////////////////////////////////////////////////////////
-vec3_t vec3_new(float x, float y, float z);
-float vec3_length(vec3_t v);
-float vec3_length_squared(vec3_t v);
-vec3_t vec3_add(vec3_t v1, vec3_t v2);
-vec3_t vec3_sub(vec3_t v1, vec3_t v2);
-vec3_t vec3_mul(vec3_t v, float factor);
-vec3_t vec3_div(vec3_t v, float factor);
-vec3_t vec3_cross(vec3_t v1, vec3_t v2);
-double vec3_dot(vec3_t v1, vec3_t v2);
-void vec3_normalize(vec3_t* v);
-vec3_t vec3_normalized(vec3_t v);
-vec3_t vec3_negative(vec3_t v);
-vec3_t vec3_clone(vec3_t* v);
-
-///////////////////////////////////////////////////////////////////////////////////////
-// Vector conversion functions
-///////////////////////////////////////////////////////////////////////////////////////
-vec4_t vec4_from_vec3(vec3_t v);
-vec3_t vec3_from_vec4(vec4_t v);
-vec2_t vec2_from_vec4(vec4_t v);
