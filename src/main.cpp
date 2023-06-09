@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <SDL.h>
 #include "display.h"
-#include "vector.h"
+#include "Vector.h"
 #include "mesh.h"
 #include "triangle.h"
 #include "array.h"
@@ -20,7 +20,7 @@ triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render = 0;
 
 int rendering_mode = 0;
-mat4_t projection_matrix = { 0 };
+Matrix4x4 projection_matrix{};
 
 bool is_running = false;
 uint32_t previous_frame_time = 0;
@@ -42,7 +42,7 @@ void setup(void)
 
 	init_frustum_planes(fovy, fovx, zNear, zFar);
 
-	projection_matrix = mat4_make_perspective(fovy, aspecty, zNear, zFar);
+	projection_matrix = Matrix4x4::MakePerspective(fovy, aspecty, zNear, zFar);
 
 	// Load hardcoded texture data
 	//load_png_texture_data("./assets/drone.png");
@@ -111,12 +111,12 @@ void process_input(void)
 			}
 			if (event.key.keysym.sym == SDLK_UP)
 			{
-				change_camera_position((vec3_t) {0, 5 * delta_time, 0});
+				change_camera_position(Vector3{0, 5 * delta_time, 0});
 				break;
 			}
 			if (event.key.keysym.sym == SDLK_DOWN)
 			{
-				change_camera_position((vec3_t) { 0, -5 * delta_time, 0 });
+				change_camera_position(Vector3{ 0, -5 * delta_time, 0 });
 				break;
 			}
 			if (event.key.keysym.sym == SDLK_a)
@@ -141,13 +141,13 @@ void process_input(void)
 			}
 			if (event.key.keysym.sym == SDLK_w)
 			{
-				vec3_t offset = vec3_mul(get_camera_directon(), 5.0 * delta_time);
+				Vector3 offset = get_camera_directon() * (5.0 * delta_time);
 				change_camera_position(offset);
 				break;
 			}
 			if (event.key.keysym.sym == SDLK_s)
 			{
-				vec3_t offset = vec3_mul(get_camera_directon(), -5.0 * delta_time);
+				Vector3 offset = get_camera_directon() * (-5.0 * delta_time);
 				change_camera_position(offset);
 				break;
 			}
@@ -158,23 +158,19 @@ void process_input(void)
 	}
 }
 
-vec3_t calculate_face_normal(vec3_t p1, vec3_t p2, vec3_t p3)
+Vector3 calculate_face_normal(const Vector3& p1, const Vector3& p2, const Vector3 p3)
 {
-	vec3_t a = vec3_sub(p2, p1);
-	vec3_t b = vec3_sub(p3, p1);
-	vec3_t normal = vec3_cross(a, b);
-	vec3_normalize(&normal);
-	return normal;
+	return Vector3::Normalized(Vector3::Cross(p2 - p1, p3 - p1));
 }
 
-bool is_should_be_culled(vec3_t pointOn, vec3_t normal)
+bool is_should_be_culled(const Vector3& pointOn, const Vector3& normal)
 {
 	if (!(rendering_mode & backface_culling_mask))
 		return false;
 
-	vec3_t origin = { 0, 0, 0 };
-	vec3_t camera_ray = vec3_sub(origin, pointOn);
-	return vec3_dot(normal, camera_ray) <= 0.0;
+	Vector3 origin = Vector3::Zero();
+	Vector3 camera_ray = origin - pointOn;
+	return Vector3::Dot(normal, camera_ray) <= 0.0;
 }
 
 triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index2)
@@ -201,8 +197,8 @@ triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index
 
 	if (rendering_mode & lighting_mask)
 	{
-		vec3_t face_normal = calculate_face_normal(polygon->vertices[index0], polygon->vertices[index1], polygon->vertices[index2]);
-		float light_intencity_factor = vec3_dot(face_normal, vec3_negative(get_light_view()));
+		Vector3 face_normal = calculate_face_normal(polygon->vertices[index0], polygon->vertices[index1], polygon->vertices[index2]);
+		float light_intencity_factor = Vector3::Dot(face_normal, Vector3::Negative(get_light_view()));
 		triangle.color = light_apply_intensity(triangle.color, light_intencity_factor);
 	}
 
@@ -213,11 +209,11 @@ void project_triangle(triangle_t* triangle)
 {
 	for (int vIndex = 0; vIndex < 3; vIndex++)
 	{
-		vec4_t projected_point = mat4_mul_vec4_project(projection_matrix, triangle->points[vIndex]);
+		Vector4 projected_point = Matrix4x4::MulVec4Project(projection_matrix, triangle->points[vIndex]);
 
 		////Scale into the view
-		projected_point.x = (projected_point.x / 2.0 + 0.5) * (get_window_width() - 1);
-		projected_point.y = (projected_point.y / 2.0 + 0.5) * (get_window_height() - 1);
+		projected_point.SetX((projected_point.GetX() / 2.0 + 0.5) * (get_window_width() - 1));
+		projected_point.SetY((projected_point.GetY() / 2.0 + 0.5) * (get_window_height() - 1));
 
 
 		triangle->points[vIndex] = projected_point;
@@ -242,28 +238,28 @@ void update(void)
 	//////////////////////////////////////////////////////////////////////
 	// SETUP CAMERA AND LIGHT
 	//////////////////////////////////////////////////////////////////////
-	vec3_t up_direction = { 0, 1, 0 };
-	vec3_t target = { 0, 0, 100 };
+	Vector3 up_direction = { 0, 1, 0 };
+	Vector3 target = { 0, 0, 100 };
 
-	mat4_t camera_yaw_rotation = mat4_make_rotation_y(get_camera_yaw());
-	mat4_t camera_pitch_rotation = mat4_make_rotation_x(get_camera_pitch());
-	mat4_t rotation_matrix = mat4_mul_mat4(camera_yaw_rotation, camera_pitch_rotation);
+	Matrix4x4 camera_yaw_rotation = Matrix4x4::MakeRotationY(get_camera_yaw());
+	Matrix4x4 camera_pitch_rotation = Matrix4x4::MakeRotationX(get_camera_pitch());
+	Matrix4x4 rotation_matrix = Matrix4x4::MulMat4(camera_yaw_rotation, camera_pitch_rotation);
 
-	target = vec3_from_vec4(mat4_mul_vec4(rotation_matrix, vec4_from_vec3(target)));
+	target = Matrix4x4::MulVec4(rotation_matrix, target.ToVector4()).ToVector3();
 
-	set_camera_direction(vec3_normalized(target));
+	set_camera_direction(target.Normalized());
 
-	mat4_t view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
+	Matrix4x4 view_matrix = Matrix4x4::LookAt(get_camera_position(), target, up_direction);
 
 	// Light in view space
-	vec3_t new_view_direction = vec3_from_vec4(mat4_mul_vec4(view_matrix, (vec4_t) {
-		.x = get_light_direction().x,
-		.y = get_light_direction().y,
-		.z = get_light_direction().z,
-		.w = 0
-	}));
+	Vector3 new_view_direction = Matrix4x4::MulVec4(view_matrix, Vector4 {
+		get_light_direction().x,
+		get_light_direction().y,
+		get_light_direction().z,
+		0
+	}).ToVector3();
 
-	set_view_light(vec3_normalized(new_view_direction));
+	set_view_light(new_view_direction.Normalized());
 	//////////////////////////////////////////////////////////////////////
 
 	for (int i = 0; i < get_mesh_count(); i++)
@@ -288,35 +284,35 @@ void update(void)
 		mesh->translation.x = 3 * i - 3;
 		mesh->translation.z = 3 * i + 3;
 
-		mat4_t scale_matrix = mat4_make_scale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
-		mat4_t translation_matrix = mat4_make_translation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
-		mat4_t rotate_x_matrix = mat4_make_rotation_x(mesh->rotation.x);
-		mat4_t rotate_y_matrix = mat4_make_rotation_y(mesh->rotation.y);
-		mat4_t rotate_z_matrix = mat4_make_rotation_z(mesh->rotation.z);
+		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
+		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
+		Matrix4x4 rotate_x_matrix = Matrix4x4::MakeRotationX(mesh->rotation.x);
+		Matrix4x4 rotate_y_matrix = Matrix4x4::MakeRotationY(mesh->rotation.y);
+		Matrix4x4 rotate_z_matrix = Matrix4x4::MakeRotationZ(mesh->rotation.z);
 
-		mat4_t world_matrix = mat4_identity();
-		world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-		world_matrix = mat4_mul_mat4(rotate_z_matrix, world_matrix);
-		world_matrix = mat4_mul_mat4(rotate_y_matrix, world_matrix);
-		world_matrix = mat4_mul_mat4(rotate_x_matrix, world_matrix);
-		world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+		Matrix4x4 world_matrix = Matrix4x4::Identity();
+		world_matrix = Matrix4x4::MulMat4(scale_matrix, world_matrix);
+		world_matrix = Matrix4x4::MulMat4(rotate_z_matrix, world_matrix);
+		world_matrix = Matrix4x4::MulMat4(rotate_y_matrix, world_matrix);
+		world_matrix = Matrix4x4::MulMat4(rotate_x_matrix, world_matrix);
+		world_matrix = Matrix4x4::MulMat4(translation_matrix, world_matrix);
 
-		mat4_t normal_matrix = mat4_identity();
-		normal_matrix = mat4_mul_mat4(rotate_z_matrix, normal_matrix);
-		normal_matrix = mat4_mul_mat4(rotate_y_matrix, normal_matrix);
-		normal_matrix = mat4_mul_mat4(rotate_x_matrix, normal_matrix);
+		Matrix4x4 normal_matrix = Matrix4x4::Identity();
+		normal_matrix = Matrix4x4::MulMat4(rotate_z_matrix, normal_matrix);
+		normal_matrix = Matrix4x4::MulMat4(rotate_y_matrix, normal_matrix);
+		normal_matrix = Matrix4x4::MulMat4(rotate_x_matrix, normal_matrix);
 
 		int num_faces = array_length(mesh->faces);
 		for (int i = 0; i < num_faces; i++)
 		{
 			face_t mesh_face = mesh->faces[i];
-			vec3_t face_vertices[3] = {
+			Vector3 face_vertices[3] = {
 				mesh->vertices[mesh_face.a],
 				mesh->vertices[mesh_face.b],
 				mesh->vertices[mesh_face.c],
 			};
 
-			vec3_t face_normals[3] = {
+			Vector3 face_normals[3] = {
 				mesh_face.a_normal,
 				mesh_face.b_normal,
 				mesh_face.c_normal
@@ -325,22 +321,22 @@ void update(void)
 
 			for (int vIndex = 0; vIndex < 3; vIndex++)
 			{
-				vec4_t transformed_vertex = vec4_from_vec3(face_vertices[vIndex]);
-				vec4_t transformed_normal = {
-					.x = face_normals[vIndex].x,
-					.y = face_normals[vIndex].y,
-					.z = face_normals[vIndex].z,
-					.w = 0
+				Vector4 transformed_vertex = face_vertices[vIndex].ToVector4();
+				Vector4 transformed_normal = {
+					face_normals[vIndex].GetX(),
+					face_normals[vIndex].GetY(),
+					face_normals[vIndex].GetZ(),
+					0
 				};
 
-				transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
-				transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+				transformed_vertex = Matrix4x4::MulVec4(world_matrix, transformed_vertex);
+				transformed_vertex = Matrix4x4::MulVec4(view_matrix, transformed_vertex);
 
-				transformed_normal = mat4_mul_vec4(normal_matrix, transformed_normal);
-				transformed_normal = mat4_mul_vec4(view_matrix, transformed_normal);
+				transformed_normal = Matrix4x4::MulVec4(normal_matrix, transformed_normal);
+				transformed_normal = Matrix4x4::MulVec4(view_matrix, transformed_normal);
 
-				face_vertices[vIndex] = vec3_from_vec4(transformed_vertex);
-				face_normals[vIndex] = vec3_from_vec4(transformed_normal);
+				face_vertices[vIndex] = transformed_vertex.ToVector3();
+				face_normals[vIndex] = transformed_normal.ToVector3();
 			}
 
 			mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);

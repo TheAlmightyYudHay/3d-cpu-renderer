@@ -50,6 +50,11 @@ float Vector3::LengthSquared() const
 	return Vector3::LengthSquared(*this);
 }
 
+Vector3 Vector3::Normalized() const
+{
+	return Vector3::Normalized(*this);
+}
+
 void Vector3::Normalize()
 {
 	float factor = 1.0f / Length();
@@ -156,6 +161,11 @@ float Vector2::Length() const
 float Vector2::LengthSquared() const
 {
 	return Vector2::LengthSquared(*this);
+}
+
+Vector2 Vector2::Normalized() const
+{
+	return Vector2::Normalized(*this);
 }
 
 void Vector2::Normalize()

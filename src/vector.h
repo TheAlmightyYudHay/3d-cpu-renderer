@@ -26,6 +26,7 @@ public:
 
 	float Length() const;
 	float LengthSquared() const;
+	Vector3 Normalized() const;
 	void Normalize();
 
 	friend Vector3 operator+ (const Vector3& v1, const Vector3& v2);
@@ -33,6 +34,10 @@ public:
 	friend Vector3 operator* (const Vector3& v, float factor);
 	friend Vector3 operator* (float factor, const Vector3& v);
 	friend Vector3 operator/ (const Vector3& v, float factor);
+
+	float GetX() const { return mX; }
+	float GetY() const { return mY; }
+	float GetZ() const { return mZ; }
 
 	Vector4 ToVector4() const;
 
@@ -60,6 +65,7 @@ public:
 
 	float Length() const;
 	float LengthSquared() const;
+	Vector2 Normalized() const;
 	void Normalize();
 
 	friend Vector2 operator+ (const Vector2& v1, const Vector2& v2);
@@ -67,6 +73,9 @@ public:
 	friend Vector2 operator* (const Vector2& v, float factor);
 	friend Vector2 operator* (float factor, const Vector2& v);
 	friend Vector2 operator/ (const Vector2& v, float factor);
+
+	float GetX() const { return mX; }
+	float GetY() const { return mY; }
 
 	Vector4 toVector4() const;
 
@@ -82,6 +91,16 @@ class Vector4
 {
 public:
 	Vector4(float x, float y, float z, float w = 1) : mX(x), mY(y), mZ(z), mW(w) {}
+
+	float GetX() const { return mX; }
+	float GetY() const { return mY; }
+	float GetZ() const { return mZ; }
+	float GetW() const { return mW; }
+
+	void SetX(float x) { mX = x; }
+	void SetY(float y) { mY = y; }
+	void SetZ(float z) { mZ = z; }
+	void SetW(float w) { mW = w; }
 
 	Vector2 ToVector2() const;
 	Vector3 ToVector3() const;

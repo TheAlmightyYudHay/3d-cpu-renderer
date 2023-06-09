@@ -164,13 +164,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Matrix.cpp" />
     <ClCompile Include="src\array.c" />
     <ClCompile Include="src\camera.c" />
     <ClCompile Include="src\clipping.c" />
     <ClCompile Include="src\display.c" />
     <ClCompile Include="src\light.c" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\matrix.c" />
     <ClCompile Include="src\mesh.c" />
     <ClCompile Include="src\swap.c" />
     <ClCompile Include="src\texture.c" />
@@ -192,7 +192,7 @@
     <ClInclude Include="src\clipping.h" />
     <ClInclude Include="src\display.h" />
     <ClInclude Include="src\light.h" />
-    <ClInclude Include="src\matrix.h" />
+    <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\swap.h" />
     <ClInclude Include="src\texture.h" />
