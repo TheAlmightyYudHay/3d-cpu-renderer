@@ -1,14 +1,14 @@
 #include "light.h"
 
 static light_t light = {
-	.direction = {.x = 0, .y = -0.5, .z = 1 },
-	.view = {.x = 0, .y = -1, .z = 0 }
+	/*.direction =*/ { 0, -0.5, 1 },
+	/*.view =*/ { 0, -1, 0 }
 };
 
-vec3_t get_light_direction(void) { return light.direction; }
-vec3_t get_light_view(void) { return light.view; }
-void set_view_light(vec3_t value) { light.view = value; }
-void normalize_light_directon(void) { vec3_normalize(&light.direction); }
+Vector3 get_light_direction(void) { return light.direction; }
+Vector3 get_light_view(void) { return light.view; }
+void set_view_light(const Vector3& value) { light.view = value; }
+void normalize_light_directon(void) { light.direction.Normalize(); }
 
 uint32_t light_apply_intensity(uint32_t original_color, float percentage_factor)
 {

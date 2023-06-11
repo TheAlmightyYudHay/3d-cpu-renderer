@@ -4,7 +4,7 @@
 uint32_t* mesh_texture = NULL;
 
 
-texture_t load_png_texture_data(char* filepath)
+texture_t load_png_texture_data(const char* filepath)
 {
     texture_t texture = {
         .texture_width = 0,

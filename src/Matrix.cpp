@@ -104,7 +104,7 @@ Matrix4x4 Matrix4x4::MakePerspective(float fov, float aspect, float zNear, float
 
 Matrix4x4 Matrix4x4::LookAt(const Vector3& eye, const Vector3& target, const Vector3& up)
 {
-	Vector3 zaxis = (eye - target).Normalized();
+	Vector3 zaxis = (target - eye).Normalized();
 	Vector3 xaxis = Vector3::Cross(up, zaxis).Normalized();
 	Vector3 yaxis = Vector3::Cross(zaxis, xaxis);
 
@@ -128,7 +128,6 @@ Vector4 Matrix4x4::MulVec4Project(const Matrix4x4& m, const Vector4& v)
 		result.SetX(result.GetX() * w);
 		result.SetY(result.GetY() * w);
 		result.SetZ(result.GetZ() * w);
-		result.SetW(1.0f);
 	}
 
 	return result;

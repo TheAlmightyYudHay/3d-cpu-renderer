@@ -7,16 +7,13 @@
 #include "Vector.h"
 #include "mesh.h"
 #include "triangle.h"
-#include "array.h"
 #include "matrix.h"
 #include "light.h"
-#include "texture.h"
-#include "upng.h"
 #include "camera.h"
 #include "clipping.h"
 
 #define MAX_TRIANGLES_PER_MESH 10000
-triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
+triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH] = {};
 int num_triangles_to_render = 0;
 
 int rendering_mode = 0;
@@ -176,24 +173,21 @@ bool is_should_be_culled(const Vector3& pointOn, const Vector3& normal)
 triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index2)
 {
 
-	triangle_t triangle = {
-			.points = {
-				vec4_from_vec3(polygon->vertices[index0]),
-				vec4_from_vec3(polygon->vertices[index1]),
-				vec4_from_vec3(polygon->vertices[index2])
-			},
-			.texcoords = {
-				polygon->texcoords[index0],
-				polygon->texcoords[index1],
-				polygon->texcoords[index2]
-			},
-			.normals = {
-				polygon->normals[index0],
-				polygon->normals[index1],
-				polygon->normals[index2]
-			},
-			.color = 0xFFFFFFFF
-	};
+	triangle_t triangle{};
+
+	triangle.points[0] = Vector4(polygon->vertices[index0]);
+	triangle.points[1] = Vector4(polygon->vertices[index1]);
+	triangle.points[2] = Vector4(polygon->vertices[index2]);
+
+	triangle.texcoords[0] = polygon->texcoords[index0];
+	triangle.texcoords[1] = polygon->texcoords[index1];
+	triangle.texcoords[2] = polygon->texcoords[index2];
+
+	triangle.normals[0] = polygon->normals[index0];
+	triangle.normals[1] = polygon->normals[index1];
+	triangle.normals[2] = polygon->normals[index2];
+
+	triangle.color = 0xFFFFFFFF;
 
 	if (rendering_mode & lighting_mask)
 	{
@@ -239,25 +233,25 @@ void update(void)
 	// SETUP CAMERA AND LIGHT
 	//////////////////////////////////////////////////////////////////////
 	Vector3 up_direction = { 0, 1, 0 };
-	Vector3 target = { 0, 0, 100 };
+	Vector3 target = { 0, 0, 10 };
 
 	Matrix4x4 camera_yaw_rotation = Matrix4x4::MakeRotationY(get_camera_yaw());
 	Matrix4x4 camera_pitch_rotation = Matrix4x4::MakeRotationX(get_camera_pitch());
 	Matrix4x4 rotation_matrix = Matrix4x4::MulMat4(camera_yaw_rotation, camera_pitch_rotation);
 
-	target = Matrix4x4::MulVec4(rotation_matrix, target.ToVector4()).ToVector3();
+	target = Vector3( Matrix4x4::MulVec4(rotation_matrix, Vector4(target)) );
 
 	set_camera_direction(target.Normalized());
 
 	Matrix4x4 view_matrix = Matrix4x4::LookAt(get_camera_position(), target, up_direction);
 
 	// Light in view space
-	Vector3 new_view_direction = Matrix4x4::MulVec4(view_matrix, Vector4 {
-		get_light_direction().x,
-		get_light_direction().y,
-		get_light_direction().z,
+	Vector3 new_view_direction = Vector3(Matrix4x4::MulVec4(view_matrix, Vector4 {
+		get_light_direction().GetX(),
+		get_light_direction().GetY(),
+		get_light_direction().GetZ(),
 		0
-	}).ToVector3();
+	}));
 
 	set_view_light(new_view_direction.Normalized());
 	//////////////////////////////////////////////////////////////////////
@@ -268,27 +262,27 @@ void update(void)
 
 		mesh->last_triangle_index = 0;
 
-		mesh->rotation.x += 1.0f * delta_time;
-		mesh->rotation.y += 1.141592f * delta_time;
-		mesh->rotation.z += 1.0f * delta_time;
+		mesh->rotation.SetX(mesh->rotation.GetX() + 0.25f * delta_time);
+		mesh->rotation.SetY(mesh->rotation.GetY() + 0.25f * delta_time);
+		mesh->rotation.SetZ(mesh->rotation.GetZ() + 0.25f * delta_time);
 
-		/*mesh->rotation.y = M_PI / 4;
-		mesh->rotation.x = M_PI / 4;*/
+		/*mesh->rotation.GetY() = M_PI / 4;
+		mesh->rotation.GetX() = M_PI / 4;*/
 
-		/*mesh->scale.x += 1 * delta_time;
-		mesh->scale.y += 1 * delta_time;
-		mesh->scale.z += 1 * delta_time;*/
+		/*mesh->scale.SetX(mesh->scale.GetX() + 1 * delta_time);
+		mesh->scale.SetY(mesh->scale.GetY() + 1 * delta_time);
+		mesh->scale.SetZ(mesh->scale.GetZ() + 1 * delta_time);*/
 
-		//mesh->translation.x = 5;
-		//mesh->translation.y -= 0.3 * delta_time;
-		mesh->translation.x = 3 * i - 3;
-		mesh->translation.z = 3 * i + 3;
+		//mesh->translation.GetX() = 5;
+		//mesh->translation.GetY() -= 0.3 * delta_time;
+		mesh->translation.SetX(3 * i - 3);
+		mesh->translation.SetZ(3 * i + 5);
 
-		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
-		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
-		Matrix4x4 rotate_x_matrix = Matrix4x4::MakeRotationX(mesh->rotation.x);
-		Matrix4x4 rotate_y_matrix = Matrix4x4::MakeRotationY(mesh->rotation.y);
-		Matrix4x4 rotate_z_matrix = Matrix4x4::MakeRotationZ(mesh->rotation.z);
+		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(mesh->scale.GetX(), mesh->scale.GetY(), mesh->scale.GetZ());
+		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(mesh->translation.GetX(), mesh->translation.GetY(), mesh->translation.GetZ());
+		Matrix4x4 rotate_x_matrix = Matrix4x4::MakeRotationX(mesh->rotation.GetX());
+		Matrix4x4 rotate_y_matrix = Matrix4x4::MakeRotationY(mesh->rotation.GetY());
+		Matrix4x4 rotate_z_matrix = Matrix4x4::MakeRotationZ(mesh->rotation.GetZ());
 
 		Matrix4x4 world_matrix = Matrix4x4::Identity();
 		world_matrix = Matrix4x4::MulMat4(scale_matrix, world_matrix);
@@ -302,7 +296,7 @@ void update(void)
 		normal_matrix = Matrix4x4::MulMat4(rotate_y_matrix, normal_matrix);
 		normal_matrix = Matrix4x4::MulMat4(rotate_x_matrix, normal_matrix);
 
-		int num_faces = array_length(mesh->faces);
+		int num_faces = mesh->faces.size();
 		for (int i = 0; i < num_faces; i++)
 		{
 			face_t mesh_face = mesh->faces[i];
@@ -321,7 +315,7 @@ void update(void)
 
 			for (int vIndex = 0; vIndex < 3; vIndex++)
 			{
-				Vector4 transformed_vertex = face_vertices[vIndex].ToVector4();
+				Vector4 transformed_vertex = Vector4(face_vertices[vIndex]);
 				Vector4 transformed_normal = {
 					face_normals[vIndex].GetX(),
 					face_normals[vIndex].GetY(),
@@ -335,8 +329,8 @@ void update(void)
 				transformed_normal = Matrix4x4::MulVec4(normal_matrix, transformed_normal);
 				transformed_normal = Matrix4x4::MulVec4(view_matrix, transformed_normal);
 
-				face_vertices[vIndex] = transformed_vertex.ToVector3();
-				face_normals[vIndex] = transformed_normal.ToVector3();
+				face_vertices[vIndex] = Vector3(transformed_vertex);
+				face_normals[vIndex] = Vector3(transformed_normal);
 			}
 
 			mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
@@ -383,7 +377,7 @@ void draw_vertices(triangle_t triangle, uint32_t color)
 {
 	for (int i = 0; i < 3; i++)
 	{
-		draw_rect(triangle.points[i].x - 2, triangle.points[i].y - 2, 4, 4, color);
+		draw_rect(triangle.points[i].GetX() - 2, triangle.points[i].GetY() - 2, 4, 4, color);
 	}
 }
 
@@ -433,9 +427,9 @@ void render(void)
 				triangle_t triangle = triangles_to_render[i];
 
 				draw_wireframe(
-					triangle.points[0].x, triangle.points[0].y,
-					triangle.points[1].x, triangle.points[1].y,
-					triangle.points[2].x, triangle.points[2].y,
+					triangle.points[0].GetX(), triangle.points[0].GetY(),
+					triangle.points[1].GetX(), triangle.points[1].GetY(),
+					triangle.points[2].GetX(), triangle.points[2].GetY(),
 					0xFF00FFFF
 				);
 

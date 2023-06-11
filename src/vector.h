@@ -1,9 +1,6 @@
 #pragma once
 
-class Vector2;
-class Vector3;
 class Vector4;
-
 
 ///////////////////////////////////////////
 // Vector3
@@ -20,9 +17,11 @@ public:
 	static float Dot(const Vector3& v1, const Vector3& v2);
 	static Vector3 Normalized(const Vector3& v);
 	static Vector3 Negative(const Vector3& v);
+	static void Swap(Vector3& v1, Vector3& v2);
 
 	Vector3() : mX(0), mY(0), mZ(0) {}	
 	Vector3(float x, float y, float z) : mX(x), mY(y), mZ(z) {}
+	Vector3(const Vector4& v);
 
 	float Length() const;
 	float LengthSquared() const;
@@ -39,7 +38,9 @@ public:
 	float GetY() const { return mY; }
 	float GetZ() const { return mZ; }
 
-	Vector4 ToVector4() const;
+	void SetX(float x) { mX = x; }
+	void SetY(float y) { mY = y; }
+	void SetZ(float z) { mZ = z; }
 
 private:
 	float mX, mY, mZ;
@@ -62,6 +63,7 @@ public:
 
 	Vector2() : mX(0), mY(0) {}
 	Vector2(float x, float y) : mX(x), mY(y) {}
+	Vector2(const Vector4& v);
 
 	float Length() const;
 	float LengthSquared() const;
@@ -77,7 +79,8 @@ public:
 	float GetX() const { return mX; }
 	float GetY() const { return mY; }
 
-	Vector4 toVector4() const;
+	void SetX(float x) { mX = x; }
+	void SetY(float y) { mY = y; }
 
 private:
 	float mX, mY;
@@ -90,7 +93,10 @@ private:
 class Vector4
 {
 public:
+	Vector4() : mX(0), mY(0), mZ(0), mW(1) {}
 	Vector4(float x, float y, float z, float w = 1) : mX(x), mY(y), mZ(z), mW(w) {}
+	Vector4(const Vector2& v) : mX(v.GetX()), mY(v.GetY()), mZ(0), mW(1) {}
+	Vector4(const Vector3& v) : mX(v.GetX()), mY(v.GetY()), mZ(v.GetZ()), mW(1) {}
 
 	float GetX() const { return mX; }
 	float GetY() const { return mY; }
@@ -101,9 +107,6 @@ public:
 	void SetY(float y) { mY = y; }
 	void SetZ(float z) { mZ = z; }
 	void SetW(float w) { mW = w; }
-
-	Vector2 ToVector2() const;
-	Vector3 ToVector3() const;
 private:
 	float mX, mY, mZ, mW;
 };

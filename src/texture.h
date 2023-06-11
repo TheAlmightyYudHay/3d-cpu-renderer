@@ -17,5 +17,5 @@ typedef struct {
 
 extern const uint8_t REDBRICK_TEXTURE[];
 
-texture_t load_png_texture_data(char* filepath);
+texture_t load_png_texture_data(const char* filepath);
 void free_texture(texture_t* texture);

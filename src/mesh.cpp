@@ -1,31 +1,30 @@
 #include "mesh.h"
-#include "array.h"
 #include <stdio.h>
 #include <string.h>
 
 static mesh_t mesh_sample = 
 {
-	.vertices = NULL,
-	.faces = NULL,
-	.rotation = {.x = 0, .y = 0, .z = 0},
-	.scale = {.x = 1.0f, .y = 1.0f, .z = 1.0f},
-	.translation = {.x = 0.0f, .y = 0.0f, .z = 0.0f}
+	/*.vertices =*/ {},
+	/*.faces =*/ {},
+	/*.rotation =*/ { 0, 0, 0},
+	/*.scale =*/ {1.0f, 1.0f, 1.0f},
+	/*.translation =*/ {0.0f, 0.0f, 0.0f}
 };
 
 static mesh_container_t mesh_container =
 {
-	.meshes_list = NULL,
-	.meshes_count = 0
+	/*.meshes_list =*/  {},
+	/*.meshes_count =*/ 0
 };
 
-vec3_t read_mesh_vertex(char* line)
+Vector3 read_mesh_vertex(char* line)
 {
-	vec3_t v;
-	sscanf_s(line, "v %f %f %f", &v.x, &v.y, &v.z);
-	return v;
+	float x, y, z;
+	sscanf_s(line, "v %f %f %f", &x, &y, &z);
+	return {x, y, z};
 }
 
-face_t read_mesh_face(char* line, tex2_t* uv_buffer, vec3_t* normal_buffer)
+face_t read_mesh_face(char* line, const std::vector<tex2_t>& uv_buffer, const std::vector<Vector3>& normal_buffer)
 {
 	face_t f;
 
@@ -58,11 +57,11 @@ tex2_t read_mesh_uv(const char* line)
 	return uv;
 }
 
-vec3_t read_mesh_normal(const char* line)
+Vector3 read_mesh_normal(const char* line)
 {
-	vec3_t normal;
-	sscanf_s(line, "vn %f %f %f", &normal.x, &normal.y, &normal.z);
-	return normal;
+	float x, y, z;
+	sscanf_s(line, "vn %f %f %f", &x, &y, &z);
+	return {x, y, z};
 }
 
 void load_obj_file_data(const char* filename, const char* texture_path)
@@ -80,8 +79,8 @@ void load_obj_file_data(const char* filename, const char* texture_path)
 		return;
 	}
 
-	tex2_t* uv_buffer = NULL;
-	vec3_t* normal_buffer = NULL;
+	std::vector<tex2_t> uv_buffer;
+	std::vector<Vector3> normal_buffer;
 	
 	while (fgets(line, sizeof(line), fp) != NULL)
 	{
@@ -89,39 +88,36 @@ void load_obj_file_data(const char* filename, const char* texture_path)
 
 		if (strncmp(line, "v ", 2) == 0)
 		{
-			array_push(mesh.vertices, read_mesh_vertex(line));
+			mesh.vertices.push_back(read_mesh_vertex(line));
 		}
 
 		if (strncmp(line, "vt ", 3) == 0)
 		{
-			array_push(uv_buffer, read_mesh_uv(line));
+			uv_buffer.push_back(read_mesh_uv(line));
 		}
 		
 		if (strncmp(line, "vn ", 3) == 0)
 		{
-			array_push(normal_buffer, read_mesh_normal(line));
+			normal_buffer.push_back(read_mesh_normal(line));
 		}
 
 		if (strncmp(line, "f ", 2) == 0)
 		{
-			array_push(mesh.faces, read_mesh_face(line, uv_buffer, normal_buffer));
+			mesh.faces.push_back(read_mesh_face(line, uv_buffer, normal_buffer));
 		}
 	}
-
-	array_free(uv_buffer);
-	array_free(normal_buffer);
 
 	fclose(fp);
 
 	mesh.mesh_texture = load_png_texture_data(texture_path);
 
-	array_push(mesh_container.meshes_list, mesh);
+	mesh_container.meshes_list.push_back(mesh);
 	mesh_container.meshes_count += 1;
 }
 
 mesh_t* get_mesh_item(int index)
 {
-	if (index >= mesh_container.meshes_count) return NULL;
+	if (index >= mesh_container.meshes_count) return nullptr;
 	return &mesh_container.meshes_list[index];
 }
 
@@ -130,10 +126,8 @@ int get_mesh_count()
 	return mesh_container.meshes_count;
 }
 
-static void free_mesh(mesh_t* mesh)
+void free_mesh(mesh_t* mesh)
 {
-	array_free(mesh->faces);
-	array_free(mesh->vertices);
 	free_texture(&(mesh->mesh_texture));
 }
 
@@ -143,6 +137,4 @@ void free_mesh_container()
 	{
 		free_mesh(get_mesh_item(i));
 	}
-
-	array_free(mesh_container.meshes_list);
 }

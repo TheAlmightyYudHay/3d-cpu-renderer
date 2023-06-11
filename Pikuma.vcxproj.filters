@@ -18,34 +18,31 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\display.c">
+    <ClCompile Include="src\display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\mesh.c">
+    <ClCompile Include="src\mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\triangle.c">
+    <ClCompile Include="src\triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\array.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\light.c">
+    <ClCompile Include="src\light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\texture.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\swap.c">
+    <ClCompile Include="src\swap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\upng.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\camera.c">
+    <ClCompile Include="src\camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\clipping.c">
+    <ClCompile Include="src\clipping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Vector.cpp">
@@ -79,9 +76,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\triangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\light.h">

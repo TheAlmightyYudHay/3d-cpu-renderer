@@ -13,10 +13,3 @@ void float_swap(float* a, float* b)
 	*a = *b;
 	*b = tmp;
 }
-
-void vec3_t_swap(vec3_t* a, vec3_t* b)
-{
-	vec3_t tmp = *a;
-	*a = *b;
-	*b = tmp;
-}

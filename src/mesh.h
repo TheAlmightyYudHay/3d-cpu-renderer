@@ -1,23 +1,27 @@
 #pragma once
 
-#include "vector.h"
+#include "Vector.h"
 #include "triangle.h"
-#include "texture.h"
+#include <vector>
 
-typedef struct
+extern "C" {
+	#include "texture.h"
+}
+
+struct mesh_t
 {
-	vec3_t* vertices;
-	face_t* faces;
-	vec3_t rotation;
-	vec3_t scale;
-	vec3_t translation;
+	std::vector<Vector3> vertices;
+	std::vector<face_t> faces;
+	Vector3 rotation;
+	Vector3 scale;
+	Vector3 translation;
 	texture_t mesh_texture;
 
 	int last_triangle_index;
-} mesh_t;
+};
 
 typedef struct {
-	mesh_t* meshes_list;
+	std::vector<mesh_t> meshes_list;
 	int meshes_count;
 } mesh_container_t;
 

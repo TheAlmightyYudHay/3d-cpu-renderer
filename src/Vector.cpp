@@ -1,5 +1,5 @@
-#include "Vector.h"
 #include <cmath>
+#include "Vector.h"
 
 //////////////////////////////
 // Vector3
@@ -12,7 +12,7 @@ float Vector3::Length(const Vector3& v)
 
 float Vector3::LengthSquared(const Vector3& v)
 {
-	return v.mX * v.mX + v.mY * v.mY + v.mZ + v.mZ;
+	return v.mX * v.mX + v.mY * v.mY + v.mZ * v.mZ;
 }
 
 Vector3 Vector3::Cross(const Vector3& v1, const Vector3& v2)
@@ -40,6 +40,17 @@ Vector3 Vector3::Negative(const Vector3& v)
 	return Vector3{-v.mX, -v.mY, -v.mZ};
 }
 
+void Vector3::Swap(Vector3& v1, Vector3& v2)
+{
+	Vector3 temp = v1;
+	v1 = v2;
+	v2 = temp;
+}
+
+Vector3::Vector3(const Vector4& v) : mX(v.GetX()), mY(v.GetY()), mZ(v.GetZ())
+{
+}
+
 float Vector3::Length() const
 {
 	return Vector3::Length(*this);
@@ -61,11 +72,6 @@ void Vector3::Normalize()
 	mX *= factor;
 	mY *= factor;
 	mZ *= factor;
-}
-
-Vector4 Vector3::ToVector4() const
-{
-	return Vector4(mX, mY, mZ, 1);
 }
 
 Vector3 operator+(const Vector3& v1, const Vector3& v2)
@@ -153,6 +159,10 @@ Vector2 Vector2::Negative(const Vector2& v)
 	return Vector2(-v.mX, -v.mY);
 }
 
+Vector2::Vector2(const Vector4& v) : mX(v.GetX()), mY(v.GetY())
+{
+}
+
 float Vector2::Length() const
 {
 	return Vector2::Length(*this);
@@ -173,19 +183,4 @@ void Vector2::Normalize()
 	float factor = 1.0f / Length();
 	mX *= factor;
 	mY *= factor;
-}
-
-Vector4 Vector2::toVector4() const
-{
-	return Vector4(mX, mY, 0, 1);
-}
-
-Vector2 Vector4::ToVector2() const
-{
-	return Vector2(mX, mY);
-}
-
-Vector3 Vector4::ToVector3() const
-{
-	return Vector3(mX, mY, mZ);
 }

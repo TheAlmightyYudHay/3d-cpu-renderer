@@ -44,8 +44,8 @@ bool initialize_window(void)
 	int fullscreen_window_width = display_mode.w;
 	int fullscreen_window_height = display_mode.h;
 
-	window_width = fullscreen_window_width / 4;
-	window_height = fullscreen_window_height / 4;
+	window_width = fullscreen_window_width / 2;
+	window_height = fullscreen_window_height / 2;
 
 	window = SDL_CreateWindow(
 		NULL,
@@ -141,7 +141,7 @@ void update_z_buffer_at(int x, int y, float value)
 	{
 		return;
 	}
-	return z_buffer[(window_width)*y + x] = value;
+	z_buffer[(window_width)*y + x] = value;
 }
 
 void draw_rect(int x, int y, int width, int height, uint32_t color)
