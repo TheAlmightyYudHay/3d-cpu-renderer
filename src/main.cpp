@@ -11,13 +11,11 @@
 #include "light.h"
 #include "camera.h"
 #include "clipping.h"
+#include "configs.h"
 
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH] = {};
 int num_triangles_to_render = 0;
-
-int rendering_mode = 0;
-Matrix4x4 projection_matrix{};
 
 bool is_running = false;
 uint32_t previous_frame_time = 0;
@@ -25,11 +23,6 @@ float delta_time;
 
 void setup(void)
 {
-	rendering_mode = wireframe_mask | backface_culling_mask;
-
-
-	void normalize_light_directon();
-
 	float aspecty = get_window_height() / (float)get_window_width();
 	float aspectx = get_window_width() / (float)get_window_height();
 	float fovy = M_PI * 60.0 / 180.0;
@@ -39,7 +32,7 @@ void setup(void)
 
 	init_frustum_planes(fovy, fovx, zNear, zFar);
 
-	projection_matrix = Matrix4x4::MakePerspective(fovy, aspecty, zNear, zFar);
+	Configs::GetInstance().Setup(fovy, aspecty, zNear, zFar);
 
 	// Load hardcoded texture data
 	//load_png_texture_data("./assets/drone.png");
@@ -55,102 +48,133 @@ void process_input(void)
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
+		Camera& camera = Configs::GetInstance().GetCamera();
+		RenderingMode& renderingMode = Configs::GetInstance().GetRenderingMode();
+		bool backfaceMode = renderingMode.IsSet(RenderingMode::Mode::BACKFACE_CULLING);
+
 		switch (event.type)
 		{
-		case SDL_QUIT:
-			is_running = false;
-			break;
-		case SDL_KEYDOWN:
-			if (event.key.keysym.sym == SDLK_ESCAPE)
-			{
+			case SDL_QUIT:
 				is_running = false;
 				break;
-			}
-			if (event.key.keysym.sym == SDLK_1)
-			{
-				rendering_mode = wireframe_mask | vertices_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			case SDL_KEYDOWN:
+				if (event.key.keysym.sym == SDLK_ESCAPE)
+				{
+					is_running = false;
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_1)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::WIREFRAME);
+					renderingMode.SetMode(RenderingMode::Mode::VERTICES);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_2)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::WIREFRAME);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_3)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::FILLED);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_4)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::FILLED);
+					renderingMode.SetMode(RenderingMode::Mode::WIREFRAME);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_5)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::TEXTURED);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_6)
+				{
+					renderingMode.Reset();
+					renderingMode.SetMode(RenderingMode::Mode::TEXTURED);
+					renderingMode.SetMode(RenderingMode::Mode::WIREFRAME);
+					if (backfaceMode)
+						renderingMode.SetMode(RenderingMode::Mode::BACKFACE_CULLING);
+
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_c)
+				{
+					renderingMode.ToggleMode(RenderingMode::Mode::BACKFACE_CULLING);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_f)
+				{
+					renderingMode.ToggleMode(RenderingMode::Mode::LIGHTING);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_UP)
+				{
+					camera.Move(Vector3{0, 5 * delta_time, 0});
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_DOWN)
+				{
+					camera.Move(Vector3{ 0, -5 * delta_time, 0 });
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					camera.ChangeYaw(-3 * delta_time);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					camera.ChangeYaw(3 * delta_time);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_q)
+				{
+					camera.ChangePitch(-3 * delta_time);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_e)
+				{
+					camera.ChangePitch(3 * delta_time);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					Vector3 offset = camera.GetDirection() * (5.0 * delta_time);
+					camera.Move(offset);
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					Vector3 offset = camera.GetDirection() * (-5.0 * delta_time);
+					camera.Move(offset);
+					break;
+				}
 				break;
-			}
-			if (event.key.keysym.sym == SDLK_2)
-			{
-				rendering_mode = wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
+			default:
 				break;
-			}
-			if (event.key.keysym.sym == SDLK_3)
-			{
-				rendering_mode = filled_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_4)
-			{
-				rendering_mode = filled_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_5)
-			{
-				rendering_mode = textured_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_6)
-			{
-				rendering_mode = textured_mask | wireframe_mask | (rendering_mode & backface_culling_mask & backface_culling_mask);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_c)
-			{
-				rendering_mode ^= backface_culling_mask;
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_f)
-			{
-				rendering_mode ^= lighting_mask;
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_UP)
-			{
-				change_camera_position(Vector3{0, 5 * delta_time, 0});
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_DOWN)
-			{
-				change_camera_position(Vector3{ 0, -5 * delta_time, 0 });
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_a)
-			{
-				change_camera_yaw(-3 * delta_time);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_d)
-			{
-				change_camera_yaw(3 * delta_time);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_q)
-			{
-				change_camera_pitch(-3 * delta_time);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_e)
-			{
-				change_camera_pitch(3 * delta_time);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_w)
-			{
-				Vector3 offset = get_camera_directon() * (5.0 * delta_time);
-				change_camera_position(offset);
-				break;
-			}
-			if (event.key.keysym.sym == SDLK_s)
-			{
-				Vector3 offset = get_camera_directon() * (-5.0 * delta_time);
-				change_camera_position(offset);
-				break;
-			}
-			break;
-		default:
-			break;
 		}
 	}
 }
@@ -162,10 +186,10 @@ Vector3 calculate_face_normal(const Vector3& p1, const Vector3& p2, const Vector
 
 bool is_should_be_culled(const Vector3& pointOn, const Vector3& normal)
 {
-	if (!(rendering_mode & backface_culling_mask))
+	if (!Configs::GetInstance().GetRenderingMode().IsSet(RenderingMode::Mode::BACKFACE_CULLING))
 		return false;
 
-	Vector3 origin = Vector3::Zero();
+	Vector3 origin = Vector3::Zero();//Since we work in view space, camera pos is always 0,0,0
 	Vector3 camera_ray = origin - pointOn;
 	return Vector3::Dot(normal, camera_ray) <= 0.0;
 }
@@ -189,11 +213,11 @@ triangle_t create_triangle(polygon_t* polygon, int index0, int index1, int index
 
 	triangle.color = 0xFFFFFFFF;
 
-	if (rendering_mode & lighting_mask)
+	if (Configs::GetInstance().GetRenderingMode().IsSet(RenderingMode::Mode::LIGHTING))
 	{
 		Vector3 face_normal = calculate_face_normal(polygon->vertices[index0], polygon->vertices[index1], polygon->vertices[index2]);
-		float light_intencity_factor = Vector3::Dot(face_normal, Vector3::Negative(get_light_view()));
-		triangle.color = light_apply_intensity(triangle.color, light_intencity_factor);
+		float light_intencity_factor = Vector3::Dot(face_normal, Vector3::Negative(Configs::GetInstance().GetLight().GetViewDirection()));
+		triangle.color = Light::ApplyIntensity(triangle.color, light_intencity_factor);
 	}
 
 	return triangle;
@@ -203,7 +227,7 @@ void project_triangle(triangle_t* triangle)
 {
 	for (int vIndex = 0; vIndex < 3; vIndex++)
 	{
-		Vector4 projected_point = Matrix4x4::MulVec4Project(projection_matrix, triangle->points[vIndex]);
+		Vector4 projected_point = Matrix4x4::MulVec4Project(Configs::GetInstance().GetProjectionMatrix(), triangle->points[vIndex]);
 
 		////Scale into the view
 		projected_point.SetX((projected_point.GetX() / 2.0 + 0.5) * (get_window_width() - 1));
@@ -232,28 +256,32 @@ void update(void)
 	//////////////////////////////////////////////////////////////////////
 	// SETUP CAMERA AND LIGHT
 	//////////////////////////////////////////////////////////////////////
+	Camera& camera = Configs::GetInstance().GetCamera();
+
 	Vector3 up_direction = { 0, 1, 0 };
 	Vector3 target = { 0, 0, 10 };
 
-	Matrix4x4 camera_yaw_rotation = Matrix4x4::MakeRotationY(get_camera_yaw());
-	Matrix4x4 camera_pitch_rotation = Matrix4x4::MakeRotationX(get_camera_pitch());
+	Matrix4x4 camera_yaw_rotation = Matrix4x4::MakeRotationY(camera.GetYaw());
+	Matrix4x4 camera_pitch_rotation = Matrix4x4::MakeRotationX(camera.GetPitch());
 	Matrix4x4 rotation_matrix = Matrix4x4::MulMat4(camera_yaw_rotation, camera_pitch_rotation);
 
 	target = Vector3( Matrix4x4::MulVec4(rotation_matrix, Vector4(target)) );
 
-	set_camera_direction(target.Normalized());
+	camera.SetDirection(target.Normalized());
 
-	Matrix4x4 view_matrix = Matrix4x4::LookAt(get_camera_position(), target, up_direction);
+	Matrix4x4 view_matrix = Matrix4x4::LookAt(camera.GetPosition(), target, up_direction);
+
+	Vector3 lightDirection = Configs::GetInstance().GetLight().GetDirection();
 
 	// Light in view space
 	Vector3 new_view_direction = Vector3(Matrix4x4::MulVec4(view_matrix, Vector4 {
-		get_light_direction().GetX(),
-		get_light_direction().GetY(),
-		get_light_direction().GetZ(),
+		lightDirection.GetX(),
+		lightDirection.GetY(),
+		lightDirection.GetZ(),
 		0
 	}));
 
-	set_view_light(new_view_direction.Normalized());
+	Configs::GetInstance().GetLight().SetView(new_view_direction.Normalized());
 	//////////////////////////////////////////////////////////////////////
 
 	for (int i = 0; i < get_mesh_count(); i++)
@@ -388,6 +416,8 @@ void render(void)
 
 	draw_grid(0xFF333333);
 
+	const RenderingMode& renderingMode = Configs::GetInstance().GetRenderingMode();
+
 	if (get_mesh_count() > 0)
 	{
 		int current_mesh_index = 0;
@@ -403,24 +433,24 @@ void render(void)
 
 			triangle_t triangle = triangles_to_render[i];
 
-			if (rendering_mode & filled_mask)
+			if (renderingMode.IsSet(RenderingMode::Mode::FILLED))
 			{
 				fill_triangle(triangle, triangle.color);
 			}
 
-			if (rendering_mode & textured_mask)
+			if (renderingMode.IsSet(RenderingMode::Mode::TEXTURED))
 			{
-				draw_textured_triangle(triangle, &current_mesh->mesh_texture, rendering_mode & lighting_mask);
+				draw_textured_triangle(triangle, &current_mesh->mesh_texture, renderingMode.IsSet(RenderingMode::Mode::LIGHTING));
 
 			}
 
-			if (rendering_mode & vertices_mask)
+			if (renderingMode.IsSet(RenderingMode::Mode::VERTICES))
 			{
 				draw_vertices(triangle, 0xFFFF0000);
 			}
 		}
 
-		if (rendering_mode & wireframe_mask)
+		if (renderingMode.IsSet(RenderingMode::Mode::WIREFRAME))
 		{
 			for (int i = 0; i < num_triangles_to_render; i++)
 			{

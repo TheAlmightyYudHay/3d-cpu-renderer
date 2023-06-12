@@ -2,20 +2,26 @@
 
 #include "Vector.h"
 
-struct camera_t {
-	Vector3 position;
-	Vector3 direction;
-	float yaw_angle;
-	float pitch_angle;
+class Camera
+{
+public:
+	Camera(const Vector3& position, const Vector3& direction) : mPosition(position), mDirection(direction.Normalized()) {}
+
+	Vector3 GetPosition() const { return mPosition; }
+	Vector3 GetDirection() const { return mDirection; }
+	void SetPosition(const Vector3& position) { mPosition = position; }
+	void SetDirection(const Vector3& direction) { mDirection = direction; }
+
+	void Move(const Vector3& offset) { mPosition = mPosition + offset; }
+
+	float GetPitch() const { return mPitchAngle; }
+	float GetYaw() const { return mYawAngle; }
+	void ChangePitch(float pitch) { mPitchAngle += pitch; }
+	void ChangeYaw(float yaw) { mYawAngle += yaw; }
+
+private:
+	Vector3 mPosition;
+	Vector3 mDirection;
+	float mYawAngle{ 0.0f };
+	float mPitchAngle{ 0.0f };
 };
-
-void change_camera_yaw(float yaw);
-float get_camera_yaw();
-void change_camera_pitch(float pitch);
-float get_camera_pitch();
-
-void change_camera_position(const Vector3& offset);
-Vector3 get_camera_position();
-
-Vector3 get_camera_directon();
-void set_camera_direction(const Vector3& dir);

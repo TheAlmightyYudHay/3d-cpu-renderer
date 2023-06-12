@@ -3,17 +3,6 @@
 #include <math.h>
 #include "vector.h"
 
-////////////////////////////////////////////////////////////////////////
-// RENDERING MODES:
-//////////////////////////////////////////////////////////////////////// 
-extern const int wireframe_mask = 1;
-extern const int vertices_mask = 2;
-extern const int filled_mask = 4;
-extern const int backface_culling_mask = 8;
-extern const int textured_mask = 16;
-extern const int lighting_mask = 32;
-//////////////////////////////////////////////////////////////////////// 
-
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static SDL_Texture* color_buffer_texture = NULL;

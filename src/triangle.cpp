@@ -4,6 +4,7 @@
 #include "display.h"
 #include "swap.h"
 #include "light.h"
+#include "configs.h"
 
 int safe_pixel = 0;
 
@@ -187,8 +188,8 @@ static void draw_texel(
 	if (is_lit)
 	{
 		fragment_normal.Normalize();
-		float light_intencity_factor = Vector3::Dot(fragment_normal, Vector3::Negative(get_light_view()));
-		result_color = light_apply_intensity(result_color, light_intencity_factor);
+		float light_intencity_factor = Vector3::Dot(fragment_normal, Vector3::Negative(Configs::GetInstance().GetLight().GetViewDirection()));
+		result_color = Light::ApplyIntensity(result_color, light_intencity_factor);
 	}
 
 	draw_pixel(x, y, result_color);

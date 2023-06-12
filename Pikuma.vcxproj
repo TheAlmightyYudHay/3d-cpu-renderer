@@ -167,6 +167,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\RenderingMode.cpp" />
+    <ClCompile Include="src\Configs.cpp" />
     <ClCompile Include="src\Matrix.cpp" />
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\clipping.cpp" />
@@ -189,12 +191,14 @@
     <Text Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Configs.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\clipping.h" />
     <ClInclude Include="src\display.h" />
     <ClInclude Include="src\light.h" />
     <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\mesh.h" />
+    <ClInclude Include="src\RenderingMode.h" />
     <ClInclude Include="src\swap.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\triangle.h" />
