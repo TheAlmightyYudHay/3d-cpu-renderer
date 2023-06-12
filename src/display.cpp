@@ -7,7 +7,6 @@ static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static SDL_Texture* color_buffer_texture = NULL;
 
-static float* z_buffer = NULL;
 static int window_width = 320;
 static int window_height = 200;
 static const int pixelGridSize = 10;
@@ -15,7 +14,6 @@ static const int pixelGridSize = 10;
 int get_window_width(void) { return window_width; }
 int get_window_height(void) { return window_height; }
 SDL_Renderer* get_renderer(void) { return renderer; }
-float* get_z_buffer(void) { return z_buffer; }
 
 bool initialize_window(void)
 {
@@ -62,7 +60,9 @@ bool initialize_window(void)
 	//color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 	GlobalBuffers::GetInstance().GetFrameBuffer().SetBufferSizes(window_width, window_height);
 	
-	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
+	//z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
+	GlobalBuffers::GetInstance().GetZBuffer().SetBufferSizes(window_width, window_height);
+
 
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
@@ -86,32 +86,6 @@ void render_color_buffer(void)
 	);
 
 	SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
-}
-
-void clear_z_buffer(void)
-{
-	for (int i = 0; i < window_height * window_width; i++)
-	{
-		z_buffer[i] = 1.0;
-	}
-}
-
-float get_z_buffer_at(int x, int y)
-{
-	if (x >= window_width || y >= window_height || x < 0 || y < 0)
-	{
-		return 1.0;
-	}
-	return z_buffer[(window_width)*y + x];
-}
-
-void update_z_buffer_at(int x, int y, float value)
-{
-	if (x >= window_width || y >= window_height || x < 0 || y < 0)
-	{
-		return;
-	}
-	z_buffer[(window_width)*y + x] = value;
 }
 
 void draw_grid(uint32_t gridColor)
@@ -142,7 +116,6 @@ void draw_rect(int x, int y, int width, int height, uint32_t color)
 
 void destroy_window(void)
 {
-	free(z_buffer);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();

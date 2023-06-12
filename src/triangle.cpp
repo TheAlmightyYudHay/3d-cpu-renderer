@@ -30,10 +30,12 @@ void draw_triangle_pixel(
 
 	float interpolated_reciprocal_w = 1.0 / w0 * weights.GetX() + 1.0 / w1 * weights.GetY() + 1.0 / w2 * weights.GetZ();
 
-	if (x >= get_window_width() || y >= get_window_height() || x < 0 || y < 0) return;
-	if (get_z_buffer_at(x, y) < (1.0 - interpolated_reciprocal_w)) return;
+	ZBuffer& zBuffer = GlobalBuffers::GetInstance().GetZBuffer();
 
-	update_z_buffer_at(x, y, 1.0 - interpolated_reciprocal_w);
+	if (x >= get_window_width() || y >= get_window_height() || x < 0 || y < 0) return;
+	if (zBuffer.GetValue(x, y) < (1.0 - interpolated_reciprocal_w)) return;
+
+	zBuffer.SetValue(x, y, 1.0 - interpolated_reciprocal_w);
 
 	GlobalBuffers::GetInstance().GetFrameBuffer().SetFrame(x, y, color);
 }
@@ -157,15 +159,17 @@ static void draw_texel(
 		Vector2(x, y)
 	);
 
+	ZBuffer& zBuffer = GlobalBuffers::GetInstance().GetZBuffer();
+
 	Vector2 uv;
 	Vector3 fragment_normal;
 
 	float interpolated_reciprocal_w = 1.0 / w0 * weights.GetX() + 1.0 / w1 * weights.GetY() + 1.0 / w2 * weights.GetZ();
 	
 	if (x >= get_window_width() || y >= get_window_height() || x < 0 || y < 0) return;
-	if (get_z_buffer_at(x, y) < (1.0 - interpolated_reciprocal_w)) return;
+	if (zBuffer.GetValue(x, y) < (1.0 - interpolated_reciprocal_w)) return;
 	
-	update_z_buffer_at(x, y, 1.0 - interpolated_reciprocal_w);
+	zBuffer.SetValue(x, y, 1.0 - interpolated_reciprocal_w);
 
 	// Interpolate props correctly
 	uv.SetX(u0 / w0 * weights.GetX() + u1 / w1 * weights.GetY() + u2 / w2 * weights.GetZ());

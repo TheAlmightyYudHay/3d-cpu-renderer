@@ -12,12 +12,8 @@
 int get_window_width(void);
 int get_window_height(void);
 SDL_Renderer* get_renderer(void);
-float* get_z_buffer(void);
-float get_z_buffer_at(int x, int y);
-void update_z_buffer_at(int x, int y, float value);
 bool initialize_window(void);
 void render_color_buffer(void);
-void clear_z_buffer(void);
 void draw_grid(uint32_t gridColor);
 void draw_rect(int x, int y, int width, int height, uint32_t color);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
