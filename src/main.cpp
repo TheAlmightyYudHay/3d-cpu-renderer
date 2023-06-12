@@ -12,6 +12,7 @@
 #include "camera.h"
 #include "clipping.h"
 #include "configs.h"
+#include "GlobalBuffers.h"
 
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH] = {};
@@ -38,9 +39,12 @@ void setup(void)
 	//load_png_texture_data("./assets/drone.png");
 
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/cube.obj", "./assets/pikuma.png");
-	load_obj_file_data("./assets/drone.obj", "./assets/drone.png");
-	load_obj_file_data("./assets/cube.obj", "./assets/cube.png");
+
+	MeshContainer& meshContainer = GlobalBuffers::GetInstance().GetMeshContainer();
+
+	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
+	meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
+	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
 }
 
 void process_input(void)
@@ -229,7 +233,7 @@ void project_triangle(triangle_t* triangle)
 	{
 		Vector4 projected_point = Matrix4x4::MulVec4Project(Configs::GetInstance().GetProjectionMatrix(), triangle->points[vIndex]);
 
-		////Scale into the view
+		// Remap x and y to viewport
 		projected_point.SetX((projected_point.GetX() / 2.0 + 0.5) * (get_window_width() - 1));
 		projected_point.SetY((projected_point.GetY() / 2.0 + 0.5) * (get_window_height() - 1));
 
@@ -272,8 +276,11 @@ void update(void)
 	Matrix4x4 view_matrix = Matrix4x4::LookAt(camera.GetPosition(), target, up_direction);
 
 	Vector3 lightDirection = Configs::GetInstance().GetLight().GetDirection();
-
+	//////////////////////////////////////////////////////////////////////
+	
+	//////////////////////////////////////////////////////////////////////
 	// Light in view space
+	//////////////////////////////////////////////////////////////////////
 	Vector3 new_view_direction = Vector3(Matrix4x4::MulVec4(view_matrix, Vector4 {
 		lightDirection.GetX(),
 		lightDirection.GetY(),
@@ -284,33 +291,39 @@ void update(void)
 	Configs::GetInstance().GetLight().SetView(new_view_direction.Normalized());
 	//////////////////////////////////////////////////////////////////////
 
-	for (int i = 0; i < get_mesh_count(); i++)
+	//////////////////////////////////////////////////////////////////////
+	// Handle meshes
+	//////////////////////////////////////////////////////////////////////
+
+	MeshContainer& meshContainer = GlobalBuffers::GetInstance().GetMeshContainer();
+
+	for (int i = 0; i < meshContainer.GetMeshCount(); i++)
 	{
-		mesh_t* mesh = get_mesh_item(i);
+		Mesh& mesh = meshContainer.GetMeshItem(i);
 
-		mesh->last_triangle_index = 0;
+		mesh.SetLastTriangleIndex(0);
 
-		mesh->rotation.SetX(mesh->rotation.GetX() + 0.25f * delta_time);
-		mesh->rotation.SetY(mesh->rotation.GetY() + 0.25f * delta_time);
-		mesh->rotation.SetZ(mesh->rotation.GetZ() + 0.25f * delta_time);
+		const Vector3& currentRotation = mesh.GetRotation();
+		const Vector3& currentTranslation = mesh.GetTranslation();
+		const Vector3& currentScale = mesh.GetScale();
 
-		/*mesh->rotation.GetY() = M_PI / 4;
-		mesh->rotation.GetX() = M_PI / 4;*/
+		mesh.SetRotation({
+			currentRotation.GetX() + 0.25f * delta_time,
+			currentRotation.GetY() + 0.25f * delta_time,
+			currentRotation.GetZ() + 0.25f * delta_time
+		});
 
-		/*mesh->scale.SetX(mesh->scale.GetX() + 1 * delta_time);
-		mesh->scale.SetY(mesh->scale.GetY() + 1 * delta_time);
-		mesh->scale.SetZ(mesh->scale.GetZ() + 1 * delta_time);*/
+		mesh.SetTranslation(Vector3(
+			3 * i - 3,
+			currentTranslation.GetY(),
+			3 * i + 5
+		));
 
-		//mesh->translation.GetX() = 5;
-		//mesh->translation.GetY() -= 0.3 * delta_time;
-		mesh->translation.SetX(3 * i - 3);
-		mesh->translation.SetZ(3 * i + 5);
-
-		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(mesh->scale.GetX(), mesh->scale.GetY(), mesh->scale.GetZ());
-		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(mesh->translation.GetX(), mesh->translation.GetY(), mesh->translation.GetZ());
-		Matrix4x4 rotate_x_matrix = Matrix4x4::MakeRotationX(mesh->rotation.GetX());
-		Matrix4x4 rotate_y_matrix = Matrix4x4::MakeRotationY(mesh->rotation.GetY());
-		Matrix4x4 rotate_z_matrix = Matrix4x4::MakeRotationZ(mesh->rotation.GetZ());
+		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(currentScale.GetX(), currentScale.GetY(), currentScale.GetZ());
+		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(currentTranslation.GetX(), currentTranslation.GetY(), currentTranslation.GetZ());
+		Matrix4x4 rotate_x_matrix = Matrix4x4::MakeRotationX(currentRotation.GetX());
+		Matrix4x4 rotate_y_matrix = Matrix4x4::MakeRotationY(currentRotation.GetY());
+		Matrix4x4 rotate_z_matrix = Matrix4x4::MakeRotationZ(currentRotation.GetZ());
 
 		Matrix4x4 world_matrix = Matrix4x4::Identity();
 		world_matrix = Matrix4x4::MulMat4(scale_matrix, world_matrix);
@@ -324,20 +337,21 @@ void update(void)
 		normal_matrix = Matrix4x4::MulMat4(rotate_y_matrix, normal_matrix);
 		normal_matrix = Matrix4x4::MulMat4(rotate_x_matrix, normal_matrix);
 
-		int num_faces = mesh->faces.size();
-		for (int i = 0; i < num_faces; i++)
+		auto vertices = mesh.GetVertices();
+		auto faces = mesh.GetFaces();
+
+		for (auto& face : faces)
 		{
-			face_t mesh_face = mesh->faces[i];
 			Vector3 face_vertices[3] = {
-				mesh->vertices[mesh_face.a],
-				mesh->vertices[mesh_face.b],
-				mesh->vertices[mesh_face.c],
+				vertices[face.a],
+				vertices[face.b],
+				vertices[face.c],
 			};
 
 			Vector3 face_normals[3] = {
-				mesh_face.a_normal,
-				mesh_face.b_normal,
-				mesh_face.c_normal
+				face.a_normal,
+				face.b_normal,
+				face.c_normal
 			};
 
 
@@ -361,9 +375,9 @@ void update(void)
 				face_normals[vIndex] = Vector3(transformed_normal);
 			}
 
-			mesh_face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
+			face.normal = calculate_face_normal(face_vertices[0], face_vertices[1], face_vertices[2]);
 
-			if (is_should_be_culled(face_vertices[0], mesh_face.normal))
+			if (is_should_be_culled(face_vertices[0], face.normal))
 			{
 				continue;
 			}
@@ -372,7 +386,7 @@ void update(void)
 			// Clipping
 			polygon_t polygon = create_polygon_from_triangle(
 				face_vertices[0], face_vertices[1], face_vertices[2],
-				mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv,
+				face.a_uv, face.b_uv, face.c_uv,
 				face_normals[0], face_normals[1], face_normals[2]
 			);
 
@@ -391,7 +405,7 @@ void update(void)
 				if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
 				{
 					triangles_to_render[num_triangles_to_render] = triangle;
-					mesh->last_triangle_index = num_triangles_to_render;
+					mesh.SetLastTriangleIndex(num_triangles_to_render);
 					num_triangles_to_render += 1;
 				}
 			}
@@ -417,18 +431,20 @@ void render(void)
 	draw_grid(0xFF333333);
 
 	const RenderingMode& renderingMode = Configs::GetInstance().GetRenderingMode();
+	auto meshContainer = GlobalBuffers ::GetInstance().GetMeshContainer();
 
-	if (get_mesh_count() > 0)
+
+	if (meshContainer.GetMeshCount() > 0)
 	{
 		int current_mesh_index = 0;
-		mesh_t* current_mesh = get_mesh_item(current_mesh_index);
+		Mesh& currentMesh = meshContainer.GetMeshItem(current_mesh_index);
 
 		for (int i = 0; i < num_triangles_to_render; i++)
 		{
-			if (current_mesh->last_triangle_index < i)
+			if (currentMesh.GetLastTriangleIndex() < i)
 			{
 				current_mesh_index++;
-				current_mesh = get_mesh_item(current_mesh_index);
+				currentMesh = meshContainer.GetMeshItem(current_mesh_index);
 			}
 
 			triangle_t triangle = triangles_to_render[i];
@@ -440,7 +456,7 @@ void render(void)
 
 			if (renderingMode.IsSet(RenderingMode::Mode::TEXTURED))
 			{
-				draw_textured_triangle(triangle, &current_mesh->mesh_texture, renderingMode.IsSet(RenderingMode::Mode::LIGHTING));
+				draw_textured_triangle(triangle, &currentMesh.GetTexture(), renderingMode.IsSet(RenderingMode::Mode::LIGHTING));
 
 			}
 
@@ -474,7 +490,7 @@ void render(void)
 void free_resources(void)
 {
 	destroy_window();
-	free_mesh_container();
+	GlobalBuffers::GetInstance().GetMeshContainer().FreeMeshContainer();
 }
 
 int main(int argc, char* args[])

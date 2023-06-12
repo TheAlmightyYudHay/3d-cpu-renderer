@@ -57,11 +57,15 @@
     <ClCompile Include="src\RenderingMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GlobalBuffers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="x64\Debug\SDL2.dll" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
@@ -112,6 +116,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\RenderingMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GlobalBuffers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

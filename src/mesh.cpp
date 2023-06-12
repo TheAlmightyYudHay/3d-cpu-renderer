@@ -2,21 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static mesh_t mesh_sample = 
-{
-	/*.vertices =*/ {},
-	/*.faces =*/ {},
-	/*.rotation =*/ { 0, 0, 0},
-	/*.scale =*/ {1.0f, 1.0f, 1.0f},
-	/*.translation =*/ {0.0f, 0.0f, 0.0f}
-};
-
-static mesh_container_t mesh_container =
-{
-	/*.meshes_list =*/  {},
-	/*.meshes_count =*/ 0
-};
-
 Vector3 read_mesh_vertex(char* line)
 {
 	float x, y, z;
@@ -64,9 +49,9 @@ Vector3 read_mesh_normal(const char* line)
 	return {x, y, z};
 }
 
-void load_obj_file_data(const char* filename, const char* texture_path)
-{	
-	mesh_t mesh = mesh_sample;
+void MeshContainer::LoadMeshData(const char* filename, const char* texture_path)
+{
+	Mesh mesh{};
 
 	FILE* fp;
 	char line[128];
@@ -81,21 +66,21 @@ void load_obj_file_data(const char* filename, const char* texture_path)
 
 	std::vector<tex2_t> uv_buffer;
 	std::vector<Vector3> normal_buffer;
-	
+
 	while (fgets(line, sizeof(line), fp) != NULL)
 	{
 		//printf("%s", line);
 
 		if (strncmp(line, "v ", 2) == 0)
 		{
-			mesh.vertices.push_back(read_mesh_vertex(line));
+			mesh.AddVertex(read_mesh_vertex(line));
 		}
 
 		if (strncmp(line, "vt ", 3) == 0)
 		{
 			uv_buffer.push_back(read_mesh_uv(line));
 		}
-		
+
 		if (strncmp(line, "vn ", 3) == 0)
 		{
 			normal_buffer.push_back(read_mesh_normal(line));
@@ -103,38 +88,22 @@ void load_obj_file_data(const char* filename, const char* texture_path)
 
 		if (strncmp(line, "f ", 2) == 0)
 		{
-			mesh.faces.push_back(read_mesh_face(line, uv_buffer, normal_buffer));
+			mesh.AddFace(read_mesh_face(line, uv_buffer, normal_buffer));
 		}
 	}
 
 	fclose(fp);
 
-	mesh.mesh_texture = load_png_texture_data(texture_path);
+	mesh.SetTexture(load_png_texture_data(texture_path));
 
-	mesh_container.meshes_list.push_back(mesh);
-	mesh_container.meshes_count += 1;
+	mMeshes.push_back(mesh);
+	mMeshesCount += 1;
 }
 
-mesh_t* get_mesh_item(int index)
+void MeshContainer::FreeMeshContainer()
 {
-	if (index >= mesh_container.meshes_count) return nullptr;
-	return &mesh_container.meshes_list[index];
-}
-
-int get_mesh_count()
-{
-	return mesh_container.meshes_count;
-}
-
-void free_mesh(mesh_t* mesh)
-{
-	free_texture(&(mesh->mesh_texture));
-}
-
-void free_mesh_container()
-{
-	for (int i = 0; i < mesh_container.meshes_count; i++)
+	for (Mesh& mesh : mMeshes)
 	{
-		free_mesh(get_mesh_item(i));
+		mesh.FreeTexture();
 	}
 }

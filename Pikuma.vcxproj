@@ -167,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GlobalBuffers.cpp" />
     <ClCompile Include="src\RenderingMode.cpp" />
     <ClCompile Include="src\Configs.cpp" />
     <ClCompile Include="src\Matrix.cpp" />
@@ -186,6 +187,7 @@
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="SDL2.dll" />
+    <None Include="x64\Debug\SDL2.dll" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
@@ -195,6 +197,7 @@
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\clipping.h" />
     <ClInclude Include="src\display.h" />
+    <ClInclude Include="src\GlobalBuffers.h" />
     <ClInclude Include="src\light.h" />
     <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\mesh.h" />
