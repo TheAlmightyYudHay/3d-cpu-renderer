@@ -7,7 +7,6 @@ static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static SDL_Texture* color_buffer_texture = NULL;
 
-static uint32_t* color_buffer = NULL;
 static float* z_buffer = NULL;
 static int window_width = 320;
 static int window_height = 200;
@@ -17,7 +16,6 @@ int get_window_width(void) { return window_width; }
 int get_window_height(void) { return window_height; }
 SDL_Renderer* get_renderer(void) { return renderer; }
 float* get_z_buffer(void) { return z_buffer; }
-uint32_t* get_color_buffer(void) { return color_buffer; }
 
 bool initialize_window(void)
 {
@@ -61,7 +59,9 @@ bool initialize_window(void)
 
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
-	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
+	//color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
+	GlobalBuffers::GetInstance().GetFrameBuffer().SetBufferSizes(window_width, window_height);
+	
 	z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
 
 	color_buffer_texture = SDL_CreateTexture(
@@ -81,7 +81,7 @@ void render_color_buffer(void)
 	SDL_UpdateTexture(
 		color_buffer_texture,
 		NULL,
-		color_buffer,
+		GlobalBuffers::GetInstance().GetFrameBuffer().GetBuffer(),
 		(int)(sizeof(uint32_t) * window_width)
 	);
 
@@ -93,25 +93,6 @@ void clear_z_buffer(void)
 	for (int i = 0; i < window_height * window_width; i++)
 	{
 		z_buffer[i] = 1.0;
-	}
-}
-
-void clear_color_buffer(uint32_t color)
-{
-	for (int i = 0; i < window_height * window_width; i++)
-	{
-		color_buffer[i] = color;
-	}
-}
-
-void draw_grid(uint32_t gridColor)
-{
-	for (int row = 0; row < window_height; row += pixelGridSize)
-	{
-		for (int col = 0; col < window_width; col += pixelGridSize)
-		{
-			color_buffer[row * window_width + col] = gridColor;
-		}
 	}
 }
 
@@ -133,26 +114,34 @@ void update_z_buffer_at(int x, int y, float value)
 	z_buffer[(window_width)*y + x] = value;
 }
 
-void draw_rect(int x, int y, int width, int height, uint32_t color)
+void draw_grid(uint32_t gridColor)
 {
-	for (int row = y; row < y + height; row++)
+	FrameBuffer& frameBuffer = GlobalBuffers::GetInstance().GetFrameBuffer();
+
+	for (int row = 0; row < window_height; row += pixelGridSize)
 	{
-		for (int col = x; col < x + width; col++)
+		for (int col = 0; col < window_width; col += pixelGridSize)
 		{
-			draw_pixel(col, row, color);
+			frameBuffer.SetFrame(col, row, gridColor);
 		}
 	}
 }
 
-void draw_pixel(int x, int y, uint32_t color)
+void draw_rect(int x, int y, int width, int height, uint32_t color)
 {
-	if (x < 0 || x >= window_width || y < 0 || y >= window_height) return;
-	color_buffer[window_width * y + x] = color;
+	FrameBuffer& frameBuffer = GlobalBuffers::GetInstance().GetFrameBuffer();
+
+	for (int row = y; row < y + height; row++)
+	{
+		for (int col = x; col < x + width; col++)
+		{
+			frameBuffer.SetFrame(col, row, color);
+		}
+	}
 }
 
 void destroy_window(void)
 {
-	free(color_buffer);
 	free(z_buffer);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -173,16 +162,20 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color)
 
 void draw_line_horisontal(int x0, int x1, int y, uint32_t color)
 {
+	FrameBuffer& frameBuffer = GlobalBuffers::GetInstance().GetFrameBuffer();
+
 	int xMin = x0 < x1 ? x0 : x1;
 	int xMax = x0 > x1 ? x0 : x1;
 	for (int xCurr = xMin; xCurr <= xMax; xCurr++)
 	{
-		draw_pixel(xCurr, y, color);
+		frameBuffer.SetFrame(xCurr, y, color);
 	}
 }
 
 void draw_line_dda(int x0, int y0, int x1, int y1, uint32_t color)
 {
+	FrameBuffer& frameBuffer = GlobalBuffers::GetInstance().GetFrameBuffer();
+
 	int dX = x1 - x0;
 	int dY = y1 - y0;
 
@@ -196,7 +189,7 @@ void draw_line_dda(int x0, int y0, int x1, int y1, uint32_t color)
 
 	for (int i = 0; i <= longest_delta; i++)
 	{
-		draw_pixel(round(xCurr), round(yCurr), color);
+		frameBuffer.SetFrame(round(xCurr), round(yCurr), color);
 		xCurr += xStep;
 		yCurr += yStep;
 	}
@@ -204,6 +197,8 @@ void draw_line_dda(int x0, int y0, int x1, int y1, uint32_t color)
 
 void draw_line_bresenham(int x0, int y0, int x1, int y1, uint32_t color)
 {
+	FrameBuffer& frameBuffer = GlobalBuffers::GetInstance().GetFrameBuffer();
+
 	int dX = abs(x1 - x0);
 	int dY = abs(y1 - y0);
 	int yStep = y1 - y0 > 0 ? 1 : -1;
@@ -215,7 +210,7 @@ void draw_line_bresenham(int x0, int y0, int x1, int y1, uint32_t color)
 
 		while (x0 != x1)
 		{
-			draw_pixel(x0, y0, color);
+			frameBuffer.SetFrame(x0, y0, color);
 
 			if (D > 0)
 			{
@@ -233,7 +228,7 @@ void draw_line_bresenham(int x0, int y0, int x1, int y1, uint32_t color)
 
 		while (y0 != y1)
 		{
-			draw_pixel(x0, y0, color);
+			frameBuffer.SetFrame(x0, y0, color);
 
 			if (D > 0)
 			{

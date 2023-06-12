@@ -5,6 +5,7 @@
 #include "swap.h"
 #include "light.h"
 #include "configs.h"
+#include "GlobalBuffers.h"
 
 int safe_pixel = 0;
 
@@ -34,7 +35,7 @@ void draw_triangle_pixel(
 
 	update_z_buffer_at(x, y, 1.0 - interpolated_reciprocal_w);
 
-	draw_pixel(x, y, color);
+	GlobalBuffers::GetInstance().GetFrameBuffer().SetFrame(x, y, color);
 }
 
 void fill_triangle(triangle_t triangle, uint32_t color)
@@ -192,7 +193,7 @@ static void draw_texel(
 		result_color = Light::ApplyIntensity(result_color, light_intencity_factor);
 	}
 
-	draw_pixel(x, y, result_color);
+	GlobalBuffers::GetInstance().GetFrameBuffer().SetFrame(x, y, result_color);
 }
 
 void draw_textured_triangle(triangle_t triangle, texture_t* texture, bool is_lit)

@@ -426,7 +426,7 @@ void draw_vertices(triangle_t triangle, uint32_t color)
 void render(void)
 {
 	clear_z_buffer();
-	clear_color_buffer(0xFF000000);
+	GlobalBuffers::GetInstance().GetFrameBuffer().Clear(0xFF000000);
 
 	draw_grid(0xFF333333);
 
