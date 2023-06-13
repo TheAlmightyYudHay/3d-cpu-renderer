@@ -42,9 +42,9 @@ void setup(void)
 
 	MeshContainer& meshContainer = GlobalBuffers::GetInstance().GetMeshContainer();
 
-	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
+	//meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
 	meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
-	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
+	//meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
 }
 
 void process_input(void)
@@ -308,15 +308,21 @@ void update(void)
 		const Vector3& currentScale = mesh.GetScale();
 
 		mesh.SetRotation({
-			currentRotation.GetX() + 0.25f * delta_time,
-			currentRotation.GetY() + 0.25f * delta_time,
-			currentRotation.GetZ() + 0.25f * delta_time
+			currentRotation.GetX() + 0.5f * delta_time,
+			currentRotation.GetY() + 0.5f * delta_time,
+			currentRotation.GetZ() + 0.515f * delta_time
 		});
 
-		mesh.SetTranslation(Vector3(
+		/*mesh.SetTranslation(Vector3(
 			3 * i - 3,
 			currentTranslation.GetY(),
 			3 * i + 5
+		));*/
+
+		mesh.SetTranslation(Vector3(
+			currentTranslation.GetX(),
+			currentTranslation.GetY(),
+			5
 		));
 
 		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(currentScale.GetX(), currentScale.GetY(), currentScale.GetZ());
@@ -482,7 +488,6 @@ void render(void)
 			}
 		}
 	}
-
 
 	render_sdl_color_buffer();
 }
