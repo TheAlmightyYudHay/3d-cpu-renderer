@@ -75,7 +75,7 @@ bool initialize_window(void)
 	return true;
 }
 
-void render_color_buffer(void)
+void render_sdl_color_buffer(void)
 {
 	SDL_RenderPresent(renderer);
 	SDL_UpdateTexture(

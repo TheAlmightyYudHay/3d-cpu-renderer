@@ -484,7 +484,7 @@ void render(void)
 	}
 
 
-	render_color_buffer();
+	render_sdl_color_buffer();
 }
 
 void free_resources(void)
