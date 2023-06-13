@@ -8,7 +8,7 @@
 
 // Initial configs should be set here.
 // Light
-static const Vector3 LightDirection = { 0, -1, 0 };
+static const Vector3 LightDirection = { 0, -0.5, 1 };
 
 // Camera
 static const Vector3 CameraPosition = { 0, 0, 0 };
