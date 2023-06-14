@@ -11,6 +11,7 @@ std::map<RenderingMode::Mode, uint8_t> RenderingMode::Modes = {
 
 void RenderingMode::SetDefault()
 {
-	SetMode(Mode::WIREFRAME);
+	SetMode(Mode::TEXTURED);
+	SetMode(Mode::LIGHTING);
 	SetMode(Mode::BACKFACE_CULLING);
 }

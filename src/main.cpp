@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -13,6 +14,8 @@
 #include "clipping.h"
 #include "configs.h"
 #include "GlobalBuffers.h"
+
+#include <benchmark/benchmark.h>
 
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH] = {};
@@ -244,6 +247,8 @@ void project_triangle(triangle_t* triangle)
 
 void update(void)
 {
+#ifndef BENCH_RUNNING
+
 	uint32_t time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
 
 	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
@@ -254,7 +259,10 @@ void update(void)
 	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
 
 	previous_frame_time = SDL_GetTicks();
-
+#endif // !BENCH_RUNNING
+#ifdef BENCH_RUNNING
+	delta_time = 30 / 1000.0;
+#endif // BENCH_RUNNING
 	num_triangles_to_render = 0;
 
 	//////////////////////////////////////////////////////////////////////
@@ -488,8 +496,9 @@ void render(void)
 			}
 		}
 	}
-
+#ifndef BENCH_RUNNING
 	render_sdl_color_buffer();
+#endif
 }
 
 void free_resources(void)
@@ -498,20 +507,57 @@ void free_resources(void)
 	GlobalBuffers::GetInstance().GetMeshContainer().FreeMeshContainer();
 }
 
-int main(int argc, char* args[])
-{
-	is_running = initialize_window();
-
-	setup();
-
-	while (is_running)
-	{
-		process_input();
-		update();
-		render();
+class MyFixture : public benchmark::Fixture {
+public:
+	void SetUp(const ::benchmark::State& state) {
+		is_running = initialize_window();
+		setup();
 	}
 
-	free_resources();
+	void TearDown(const ::benchmark::State& state) {
+		free_resources();
+	}
+};
 
-	return 0;
+BENCHMARK_F(MyFixture, NoMultithreading)(benchmark::State& st) {
+	for (auto _ : st) {
+		for (int i = 0; i < 10000; i++)
+		{
+			update();
+			render();
+		}
+	}
 }
+
+BENCHMARK_F(MyFixture, NoMultithreading2)(benchmark::State& st) {
+	for (auto _ : st) {
+		for (int i = 0; i < 10000; i++)
+		{
+			update();
+			render();
+		}
+	}
+}
+
+BENCHMARK_REGISTER_F(MyFixture, NoMultithreading)->Unit(benchmark::kMillisecond)->Threads(1);
+BENCHMARK_REGISTER_F(MyFixture, NoMultithreading2)->Unit(benchmark::kMillisecond)->Threads(1);
+
+BENCHMARK_MAIN();
+
+//int main(int argc, char* args[])
+//{
+//	is_running = initialize_window();
+//
+//	setup();
+//
+//	while (is_running)
+//	{
+//		process_input();
+//		update();
+//		render();
+//	}
+//
+//	free_resources();
+//
+//	return 0;
+//}

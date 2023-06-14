@@ -106,4 +106,7 @@ void MeshContainer::FreeMeshContainer()
 	{
 		mesh.FreeTexture();
 	}
+
+	mMeshes.clear();
+	mMeshesCount = 0;
 }
