@@ -17,6 +17,8 @@
 
 #include <benchmark/benchmark.h>
 
+//#define BENCH_RUNNING
+
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH] = {};
 int num_triangles_to_render = 0;
@@ -46,8 +48,8 @@ void setup(void)
 	MeshContainer& meshContainer = GlobalBuffers::GetInstance().GetMeshContainer();
 
 	//meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
-	meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
-	//meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
+	//meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
+	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
 }
 
 void process_input(void)
@@ -316,8 +318,8 @@ void update(void)
 		const Vector3& currentScale = mesh.GetScale();
 
 		mesh.SetRotation({
-			currentRotation.GetX() + 0.5f * delta_time,
-			currentRotation.GetY() + 0.5f * delta_time,
+			currentRotation.GetX() /*+ 0.5f * delta_time*/,
+			currentRotation.GetY() /*+ 0.5f * delta_time*/,
 			currentRotation.GetZ() + 0.515f * delta_time
 		});
 
@@ -519,6 +521,9 @@ public:
 	}
 };
 
+
+#ifdef BENCH_RUNNING
+
 BENCHMARK_F(MyFixture, NoMultithreading)(benchmark::State& st) {
 	for (auto _ : st) {
 		for (int i = 0; i < 10000; i++)
@@ -544,20 +549,24 @@ BENCHMARK_REGISTER_F(MyFixture, NoMultithreading2)->Unit(benchmark::kMillisecond
 
 BENCHMARK_MAIN();
 
-//int main(int argc, char* args[])
-//{
-//	is_running = initialize_window();
-//
-//	setup();
-//
-//	while (is_running)
-//	{
-//		process_input();
-//		update();
-//		render();
-//	}
-//
-//	free_resources();
-//
-//	return 0;
-//}
+#else
+
+int main(int argc, char* args[])
+{
+	is_running = initialize_window();
+
+	setup();
+
+	while (is_running)
+	{
+		process_input();
+		update();
+		render();
+	}
+
+	free_resources();
+
+	return 0;
+}
+
+#endif
