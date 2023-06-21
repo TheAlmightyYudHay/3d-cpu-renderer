@@ -15,7 +15,7 @@
 #include "configs.h"
 #include "GlobalBuffers.h"
 
-#include <benchmark/benchmark.h>
+//#include <benchmark/benchmark.h>
 
 //#define BENCH_RUNNING
 
@@ -47,8 +47,8 @@ void setup(void)
 
 	MeshContainer& meshContainer = GlobalBuffers::GetInstance().GetMeshContainer();
 
-	//meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
-	//meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
+	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/pikuma.png");
+	meshContainer.LoadMeshData("./assets/drone.obj", "./assets/drone.png");
 	meshContainer.LoadMeshData("./assets/cube.obj", "./assets/cube.png");
 }
 
@@ -70,6 +70,11 @@ void process_input(void)
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 				{
 					is_running = false;
+					break;
+				}
+				if (event.key.keysym.sym == SDLK_0)
+				{
+					std::cout << "hello" << '\n';
 					break;
 				}
 				if (event.key.keysym.sym == SDLK_1)
@@ -265,6 +270,7 @@ void update(void)
 #ifdef BENCH_RUNNING
 	delta_time = 30 / 1000.0;
 #endif // BENCH_RUNNING
+
 	num_triangles_to_render = 0;
 
 	//////////////////////////////////////////////////////////////////////
@@ -311,29 +317,27 @@ void update(void)
 	{
 		Mesh& mesh = meshContainer.GetMeshItem(i);
 
-		mesh.SetLastTriangleIndex(0);
-
 		const Vector3& currentRotation = mesh.GetRotation();
 		const Vector3& currentTranslation = mesh.GetTranslation();
 		const Vector3& currentScale = mesh.GetScale();
 
 		mesh.SetRotation({
-			currentRotation.GetX() /*+ 0.5f * delta_time*/,
-			currentRotation.GetY() /*+ 0.5f * delta_time*/,
+			currentRotation.GetX() + 0.5f * delta_time,
+			currentRotation.GetY() + 0.5f * delta_time,
 			currentRotation.GetZ() + 0.515f * delta_time
 		});
 
-		/*mesh.SetTranslation(Vector3(
+		mesh.SetTranslation(Vector3(
 			3 * i - 3,
 			currentTranslation.GetY(),
 			3 * i + 5
-		));*/
+		));
 
-		mesh.SetTranslation(Vector3(
+		/*mesh.SetTranslation(Vector3(
 			currentTranslation.GetX(),
 			currentTranslation.GetY(),
 			5
-		));
+		));*/
 
 		Matrix4x4 scale_matrix = Matrix4x4::MakeScale(currentScale.GetX(), currentScale.GetY(), currentScale.GetZ());
 		Matrix4x4 translation_matrix = Matrix4x4::MakeTranslation(currentTranslation.GetX(), currentTranslation.GetY(), currentTranslation.GetZ());
@@ -447,7 +451,7 @@ void render(void)
 	draw_grid(0xFF333333);
 
 	const RenderingMode& renderingMode = Configs::GetInstance().GetRenderingMode();
-	auto meshContainer = GlobalBuffers ::GetInstance().GetMeshContainer();
+	MeshContainer& meshContainer = GlobalBuffers ::GetInstance().GetMeshContainer();
 
 
 	if (meshContainer.GetMeshCount() > 0)
@@ -457,7 +461,7 @@ void render(void)
 
 		for (int i = 0; i < num_triangles_to_render; i++)
 		{
-			if (currentMesh.GetLastTriangleIndex() < i)
+			while (currentMesh.GetLastTriangleIndex() < i)
 			{
 				current_mesh_index++;
 				currentMesh = meshContainer.GetMeshItem(current_mesh_index);
@@ -497,6 +501,11 @@ void render(void)
 
 			}
 		}
+
+		for (std::size_t index = 0; index < meshContainer.GetMeshCount(); index++)
+		{
+			meshContainer.GetMeshItem(index).ResetLastTriangleIndex();
+		}
 	}
 #ifndef BENCH_RUNNING
 	render_sdl_color_buffer();
@@ -509,6 +518,11 @@ void free_resources(void)
 	GlobalBuffers::GetInstance().GetMeshContainer().FreeMeshContainer();
 }
 
+
+
+
+#ifdef BENCH_RUNNING
+
 class MyFixture : public benchmark::Fixture {
 public:
 	void SetUp(const ::benchmark::State& state) {
@@ -520,9 +534,6 @@ public:
 		free_resources();
 	}
 };
-
-
-#ifdef BENCH_RUNNING
 
 BENCHMARK_F(MyFixture, NoMultithreading)(benchmark::State& st) {
 	for (auto _ : st) {

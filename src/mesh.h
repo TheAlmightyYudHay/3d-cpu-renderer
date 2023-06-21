@@ -13,7 +13,7 @@ class Mesh
 public:
 	Mesh() 
 		: mVertices(), mFaces(), mRotation(0, 0, 0), mScale(1.0f, 1.0f, 1.0f), 
-		mTranslation(0.0f, 0.0f, 0.0f), mMeshTexture{ 0 }, mLastTriangleIndex{ 0 } 
+		mTranslation(0.0f, 0.0f, 0.0f), mMeshTexture{ 0 }, mLastTriangleIndex{ -1 } 
 	{}
 
 	void AddVertex(const Vector3& vertex) { mVertices.push_back(vertex); }
@@ -34,6 +34,8 @@ public:
 
 	const std::vector<Vector3>& GetVertices() const { return mVertices; }
 	const std::vector<face_t>& GetFaces() const { return mFaces; }
+
+	void ResetLastTriangleIndex() { mLastTriangleIndex = -1; }
 
 private:
 	std::vector<Vector3> mVertices;
